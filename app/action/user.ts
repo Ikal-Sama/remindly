@@ -16,10 +16,13 @@ export const getUserWithOAuth = async () => {
       return { success: false, error: "Unauthorized" };
     }
 
-    // Check if user has OAuth accounts
+    // Check if user has OAuth accounts (excluding credential provider)
     const oauthAccounts = await prisma.account.findMany({
       where: {
         userId: session.user.id,
+        providerId: {
+          not: "credential", // Exclude credential provider
+        },
       },
       select: {
         providerId: true,
@@ -29,16 +32,19 @@ export const getUserWithOAuth = async () => {
     const hasOAuthAccounts = oauthAccounts.length > 0;
 
     // Check if user has password credentials (non-OAuth account)
-    const hasPasswordCredentials = oauthAccounts.some(
-      (account) => account.providerId === "credential"
-    );
+    const hasPasswordCredentials = await prisma.account.findFirst({
+      where: {
+        userId: session.user.id,
+        providerId: "credential",
+      },
+    });
 
     return {
       success: true,
       user: {
         ...session.user,
         hasOAuthAccounts,
-        hasPasswordCredentials,
+        hasPasswordCredentials: !!hasPasswordCredentials,
         isOAuthOnly: hasOAuthAccounts && !hasPasswordCredentials,
       },
     };
