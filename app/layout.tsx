@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import Navbar from "@/components/shared/navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { Footer } from "@/components/shared/footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
             <Navbar />
             <main className="min-h-screen  mx-auto py-10">{children}</main>
             <Toaster richColors />
+            <Footer />
           </div>
         </ThemeProvider>
       </body>
