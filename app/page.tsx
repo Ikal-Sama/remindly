@@ -5,8 +5,39 @@ import { Button } from "@/components/ui/button";
 import Aurora from "@/components/Aurora.jsx";
 import "@/components/Aurora.css";
 import Image from "next/image";
+import { authClient } from "@/lib/auth/auth-client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function page() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const session = await authClient.getSession();
+        setIsAuthenticated(!!session.data?.user);
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    } else {
+      router.push("/login");
+    }
+  };
+
   return (
     <div className="relative">
       <Aurora />
@@ -21,8 +52,17 @@ export default function page() {
             never miss important deadlines again.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" className="px-8">
-              Get Started
+            <Button
+              size="lg"
+              className="px-8"
+              onClick={handleGetStarted}
+              disabled={isLoading}
+            >
+              {isLoading
+                ? "Loading..."
+                : isAuthenticated
+                ? "Go to Dashboard"
+                : "Get Started"}
             </Button>
             <Button size="lg" variant="ghost" className="px-8">
               Learn More
