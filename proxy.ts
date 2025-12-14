@@ -24,7 +24,7 @@ function isAuthenticated(request: NextRequest) {
   return !!(sessionCookie?.value && sessionCookie.value.length > 0);
 }
 
-export default function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip static files and Next internals
