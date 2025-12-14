@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "sonner";
 
 const getPasswordFormSchema = (isOAuthUser?: boolean) =>
@@ -99,8 +100,7 @@ export default function UpdatePasswordForm({
               <FormItem>
                 <FormLabel>Current Password</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
+                  <PasswordInput
                     placeholder="Enter current password"
                     {...field}
                   />
@@ -118,11 +118,7 @@ export default function UpdatePasswordForm({
             <FormItem>
               <FormLabel>New Password</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="Enter new password"
-                  {...field}
-                />
+                <PasswordInput placeholder="Enter new password" {...field} />
               </FormControl>
               <FormDescription>
                 Password must be at least 8 characters long.
@@ -139,11 +135,7 @@ export default function UpdatePasswordForm({
             <FormItem>
               <FormLabel>Confirm New Password</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="Confirm new password"
-                  {...field}
-                />
+                <PasswordInput placeholder="Confirm new password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
