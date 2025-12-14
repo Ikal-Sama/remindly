@@ -15,10 +15,12 @@ function isRouteMatch(pathname: string, routes: string[]) {
 }
 
 function isAuthenticated(request: NextRequest) {
-  // Better Auth stores its session token in a cookie named `better-auth.session_token`
+  // Better Auth stores its session token in a cookie named `__Secure-better-auth.session_token` in production
   // We can't call Prisma/Better Auth in Edge middleware, so we just
   // infer auth state from the presence of this cookie.
-  const sessionCookie = request.cookies.get("better-auth.session_token");
+  const sessionCookie =
+    request.cookies.get("__Secure-better-auth.session_token") ||
+    request.cookies.get("better-auth.session_token");
 
   // Check if cookie exists and has a value (not empty)
   return !!(sessionCookie?.value && sessionCookie.value.length > 0);
