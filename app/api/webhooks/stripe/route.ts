@@ -33,7 +33,6 @@ export async function POST(req: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error("Stripe webhook signature verification failed", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -74,15 +73,11 @@ export async function POST(req: NextRequest) {
             }
           }
         } catch (err) {
-          console.error(
-            "Stripe webhook: failed to retrieve customer for fallback lookup",
-            { customerId, err }
-          );
+          return NextResponse.json({ error: "Webhook error" }, { status: 500 });
         }
       }
 
       if (!user) {
-        console.warn("Stripe webhook: user not found for customer", customerId);
         return NextResponse.json({ received: true });
       }
 
@@ -101,26 +96,32 @@ export async function POST(req: NextRequest) {
       // Determine corresponding app subscription plan based on Stripe price id
       let planId: string | null = null;
 
+      // Handle PRO plan
       if (priceId && priceId === process.env.STRIPE_PRO_PRICE_ID) {
         const proPlan = await prisma.subscriptionPlan.findUnique({
           where: { name: "PRO" },
         });
 
         if (!proPlan) {
-          console.error(
-            "Stripe webhook: PRO plan not found in subscriptionPlan table"
-          );
           return NextResponse.json({ received: true });
         }
 
         planId = proPlan.id;
       }
+      // Handle FREE plan - secure fallback for cases where FREE plan might be processed
+      else if (!priceId || priceId === process.env.STRIPE_FREE_PRICE_ID) {
+        const freePlan = await prisma.subscriptionPlan.findUnique({
+          where: { name: "FREE" },
+        });
+
+        if (!freePlan) {
+          return NextResponse.json({ received: true });
+        }
+
+        planId = freePlan.id;
+      }
 
       if (!planId) {
-        console.warn(
-          "Stripe webhook: unable to determine planId for subscription",
-          { subscriptionId: subscription.id, priceId }
-        );
         return NextResponse.json({ received: true });
       }
 
