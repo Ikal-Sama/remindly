@@ -1,8 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Remindly - Smart Task Reminder Application
+
+Remindly is a powerful yet intuitive task reminder application designed to help you stay organized and never miss important deadlines. Built with modern web technologies, Remindly offers a seamless experience across all your devices.
+
+## Features
+
+- **Task Management**: Create, organize, and track your tasks efficiently
+- **Smart Reminders**: Set timely notifications for important deadlines
+- **Priority Organization**: Organize tasks by priority levels
+- **Progress Tracking**: Monitor your task completion progress
+- **Web-based**: Accessible from any device with a web browser
+- **Modern UI**: Clean, responsive interface built with Tailwind CSS
+- **User Authentication**: Secure login and user profile management
+- **Dark Mode**: Toggle between light and dark themes
+
+## Tech Stack
+
+- **Frontend**: Next.js 16 with TypeScript
+- **Styling**: Tailwind CSS for modern, responsive design
+- **Fonts**: Custom typography with Audiowide font
+- **Authentication**: Secure user authentication system
+- **Icons**: Lucide React icons
+- **Components**: Custom UI components with shadcn/ui
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/your-username/remindly.git
+cd remindly
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+3. Run the development server:
 
 ```bash
 npm run dev
@@ -14,23 +62,82 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+remindly/
+├── app/                    # Next.js app router pages
+│   ├── about/            # About page
+│   ├── dashboard/         # User dashboard
+│   ├── pricing/           # Pricing page
+│   ├── settings/          # User settings
+│   └── page.tsx          # Home page
+├── components/             # Reusable components
+│   ├── shared/            # Shared components (navbar, etc.)
+│   └── ui/               # UI components
+├── lib/                   # Utility libraries
+└── public/                 # Static assets
+```
 
-## Learn More
+## Pages
 
-To learn more about Next.js, take a look at the following resources:
+- **Home**: Landing page with app overview and pricing
+- **About**: Information about Remindly and the developer
+- **Pricing**: Detailed pricing plans and feature comparison
+- **Dashboard**: Main application interface for task management
+- **Settings**: User profile and account settings
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Responsive Design
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Remindly is fully responsive and optimized for:
 
-## Deploy on Vercel
+- **Mobile devices** (320px+)
+- **Tablets** (768px+)
+- **Desktop** (1024px+)
+- **Large screens** (1280px+)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Development
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Available Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+```
+
+### Environment Variables
+
+Create a `.env.local` file for environment variables:
+
+```env
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## Support
+
+For support and questions:
+
+- Create an issue on GitHub
+- Check the documentation
+- Contact the developer
+
+---
+
+**Built with ❤️ by [Daniel Jhon Bancale](https://github.com/ikalsama)**
