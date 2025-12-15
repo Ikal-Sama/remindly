@@ -195,7 +195,13 @@ export default function Navbar() {
                 variant="ghost"
                 className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
                 onClick={() => {
-                  authClient.signOut();
+                  authClient.signOut({
+                    fetchOptions: {
+                      onSuccess: () => {
+                        window.location.href = "/login";
+                      },
+                    },
+                  });
                   setMobileMenuOpen(false);
                 }}
               >

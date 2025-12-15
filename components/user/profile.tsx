@@ -71,7 +71,15 @@ export default function Profile() {
 
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => authClient.signOut()}
+          onClick={() =>
+            authClient.signOut({
+              fetchOptions: {
+                onSuccess: () => {
+                  window.location.href = "/login";
+                },
+              },
+            })
+          }
           className="rounded-md px-2 py-2 cursor-pointer transition-all hover:bg-accent"
         >
           Logout <LogOut className="w-4 h-4" />
