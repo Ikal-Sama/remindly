@@ -55,7 +55,7 @@ export default function ContactPage() {
             <CardContent className="text-center">
               <Button
                 variant="outline"
-                className="w-full group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                className="w-full group-hover:bg-blue-600! group-hover:text-white transition-colors"
                 asChild
               >
                 <a
