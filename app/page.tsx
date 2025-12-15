@@ -1,5 +1,6 @@
 "use client";
 
+import { Metadata } from "next";
 import SubscriptionsPlan from "@/components/shared/subs-plan";
 import { Button } from "@/components/ui/button";
 import Aurora from "@/components/Aurora.jsx";
@@ -8,6 +9,9 @@ import Image from "next/image";
 import { authClient } from "@/lib/auth/auth-client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+// Note: In client components, metadata should be handled at the page level
+// For full SEO, consider converting to server component or using generateMetadata
 
 export default function page() {
   const router = useRouter();
