@@ -43,7 +43,8 @@ export const createTaskAction = async (
     }
 
     const fieldData = createTaskFormSchema.parse(values);
-    const { title, description, dueDate, reminderDate } = fieldData;
+    const { title, description, dueDate, reminderDate, categoryId, labelIds } =
+      fieldData;
 
     // Additional validation: ensure reminder date logic is enforced
     if (reminderDate && dueDate) {
@@ -77,9 +78,22 @@ export const createTaskAction = async (
           subscription.plan.name === "PRO" && reminderDate
             ? reminderDate
             : null,
+        // Only allow categories for PRO plan users
+        categoryId:
+          subscription.plan.name === "PRO" && categoryId ? categoryId : null,
         userId,
       },
     });
+
+    // Add labels if provided (PRO feature)
+    if (subscription.plan.name === "PRO" && labelIds && labelIds.length > 0) {
+      await prisma.taskLabel.createMany({
+        data: labelIds.map((labelId: string) => ({
+          taskId: task.id,
+          labelId,
+        })),
+      });
+    }
 
     return { success: true, task };
   } catch (error) {
@@ -98,12 +112,26 @@ export const getLoggedInUserAllTasks = async (userId: string) => {
       where: {
         userId: userId,
       },
+      include: {
+        category: true,
+        taskLabels: {
+          include: {
+            label: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    return { success: true, tasks };
+    // Transform the data to match expected structure
+    const transformedTasks = tasks.map((task) => ({
+      ...task,
+      labels: task.taskLabels, // Map taskLabels to labels for consistency
+    }));
+
+    return { success: true, tasks: transformedTasks };
   } catch (error) {
     console.error("getLoggedInUserAllTasks error:", error);
     return { success: false, error: "Failed to fetch tasks" };
@@ -183,6 +211,8 @@ export const updateTask = async (
     description?: string;
     dueDate?: Date;
     reminderDate?: Date;
+    categoryId?: string;
+    labelIds?: string[];
   }
 ) => {
   try {
@@ -191,12 +221,33 @@ export const updateTask = async (
       where: {
         id: taskId,
       },
+      include: {
+        taskLabels: {
+          include: {
+            label: true,
+          },
+        },
+      },
     });
 
     if (!task) {
       return { success: false, error: "Task not found" };
     }
 
+    // Get user subscription to check PRO features
+    const subscription = await prisma.userSubscription.findFirst({
+      where: {
+        userId: task.userId,
+        status: "active",
+      },
+      include: {
+        plan: true,
+      },
+    });
+
+    const isPro = subscription?.plan?.name === "PRO";
+
+    // Update the task
     const updatedTask = await prisma.task.update({
       where: {
         id: taskId,
@@ -205,10 +256,31 @@ export const updateTask = async (
         title: data.title,
         description: data.description,
         dueDate: data.dueDate,
-        reminderDate: data.reminderDate,
+        reminderDate: isPro ? data.reminderDate : null,
+        categoryId: isPro ? data.categoryId : null,
         updatedAt: new Date(),
       },
     });
+
+    // Handle labels update (PRO feature)
+    if (isPro && data.labelIds !== undefined) {
+      // Remove existing labels
+      await prisma.taskLabel.deleteMany({
+        where: {
+          taskId: taskId,
+        },
+      });
+
+      // Add new labels if any
+      if (data.labelIds.length > 0) {
+        await prisma.taskLabel.createMany({
+          data: data.labelIds.map((labelId: string) => ({
+            taskId: taskId,
+            labelId,
+          })),
+        });
+      }
+    }
 
     return { success: true, task: updatedTask };
   } catch (error) {

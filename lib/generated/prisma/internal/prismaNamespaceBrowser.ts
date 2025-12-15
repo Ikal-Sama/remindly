@@ -58,7 +58,10 @@ export const ModelName = {
   SubscriptionPlan: 'SubscriptionPlan',
   UserSubscription: 'UserSubscription',
   Task: 'Task',
-  EmailNotification: 'EmailNotification'
+  EmailNotification: 'EmailNotification',
+  Category: 'Category',
+  Label: 'Label',
+  TaskLabel: 'TaskLabel'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -173,6 +176,7 @@ export const TaskScalarFieldEnum = {
   description: 'description',
   dueDate: 'dueDate',
   reminderDate: 'reminderDate',
+  categoryId: 'categoryId',
   isCompleted: 'isCompleted',
   userId: 'userId',
   createdAt: 'createdAt',
@@ -191,6 +195,41 @@ export const EmailNotificationScalarFieldEnum = {
 } as const
 
 export type EmailNotificationScalarFieldEnum = (typeof EmailNotificationScalarFieldEnum)[keyof typeof EmailNotificationScalarFieldEnum]
+
+
+export const CategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  color: 'color',
+  description: 'description',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
+
+
+export const LabelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  color: 'color',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LabelScalarFieldEnum = (typeof LabelScalarFieldEnum)[keyof typeof LabelScalarFieldEnum]
+
+
+export const TaskLabelScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  labelId: 'labelId',
+  createdAt: 'createdAt'
+} as const
+
+export type TaskLabelScalarFieldEnum = (typeof TaskLabelScalarFieldEnum)[keyof typeof TaskLabelScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -2,60 +2,51 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import ActionButton from "@/components/action-button";
 import { authClient } from "@/lib/auth/auth-client";
-import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import CreateTask from "@/components/user/task/create";
-import EditTask from "@/components/user/task/edit";
-import {
-  Plus,
-  CheckCircle,
-  Circle,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
   Calendar,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Target,
+  PieChart,
+  Users,
+  Activity,
   Filter,
-  DotSquare,
-  CircleCheck,
-  Trash2,
-  MoreHorizontal,
-  Edit,
+  Download,
+  RefreshCw,
+  Plus,
 } from "lucide-react";
-import {
-  getLoggedInUserAllTasks,
-  completeTask,
-  deleteTask,
-} from "@/app/action/task";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAnalyticsStore } from "@/stores/analytics-store";
+import AnalyticsDashboard from "@/components/analytics/analytics-dashboard";
+import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const { analytics, isLoading, error, fetchAnalytics, setIsPro } =
+    useAnalyticsStore();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [tasksLoading, setTasksLoading] = useState(false);
-  const [filter, setFilter] = useState<"all" | "completed" | "incomplete">(
-    "all"
+  const [isPro, setIsProState] = useState(false);
+  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "1y">(
+    "30d"
   );
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [editingTask, setEditingTask] = useState<any>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -78,218 +69,40 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchSubscription = async () => {
       if (!user) return;
 
-      setTasksLoading(true);
       try {
-        const result = await getLoggedInUserAllTasks(user.id);
-        if (result.success) {
-          setTasks(result.tasks || []);
-        } else {
-          toast.error("Failed to fetch tasks");
+        const response = await fetch("/api/subscription/create", {
+          method: "GET",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const currentPlan: string | undefined =
+            data?.currentSubscription?.plan?.name;
+          setIsProState(currentPlan === "PRO");
+          setIsPro(currentPlan === "PRO");
         }
       } catch (error) {
-        console.error("Error fetching tasks:", error);
-        toast.error("Something went wrong");
-      } finally {
-        setTasksLoading(false);
+        console.error("Error fetching subscription:", error);
       }
     };
 
-    fetchTasks();
-  }, [user]);
+    fetchSubscription();
+  }, [user, setIsPro]);
 
-  const createTask = async () => {
-    if (!user) return;
-
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/subscription/create");
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push("/login");
-          return;
-        }
-        throw new Error("Failed to check subscription");
-      }
-
-      const data = await response.json();
-
-      if (!data.hasActiveSubscription) {
-        router.push("/choose-plan");
-        return;
-      }
-
-      // Open create task dialog when user has active subscription
-      setIsDialogOpen(true);
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (isPro) {
+      fetchAnalytics();
     }
+  }, [isPro, fetchAnalytics]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchAnalytics();
+    setRefreshing(false);
   };
-
-  const completedTasks = tasks.filter((task) => task.isCompleted);
-  const incompleteTasks = tasks.filter((task) => !task.isCompleted);
-
-  const filteredTasks = tasks.filter((task) => {
-    if (filter === "completed") return task.isCompleted;
-    if (filter === "incomplete") return !task.isCompleted;
-    return true; // "all"
-  });
-
-  const handleCompleteTask = async (taskId: string) => {
-    if (!user) return;
-
-    setActionLoading(taskId);
-    try {
-      const result = await completeTask(taskId, user.id);
-      if (result.success) {
-        // Refresh tasks to get updated state
-        const fetchResult = await getLoggedInUserAllTasks(user.id);
-        if (fetchResult.success) {
-          setTasks(fetchResult.tasks || []);
-        }
-        toast.success("Task completed!");
-      } else {
-        toast.error(result.error || "Failed to complete task");
-      }
-    } catch (error) {
-      console.error("Complete task error:", error);
-      toast.error("Something went wrong");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleDeleteTask = async (taskId: string) => {
-    if (!user) return;
-
-    setActionLoading(taskId);
-    try {
-      const result = await deleteTask(taskId, user.id);
-      if (result.success) {
-        // Refresh tasks to get updated state
-        const fetchResult = await getLoggedInUserAllTasks(user.id);
-        if (fetchResult.success) {
-          setTasks(fetchResult.tasks || []);
-        }
-        toast.success("Task deleted!");
-      } else {
-        toast.error(result.error || "Failed to delete task");
-      }
-    } catch (error) {
-      console.error("Delete task error:", error);
-      toast.error("Something went wrong");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleEditTask = (task: any) => {
-    setEditingTask(task);
-    setIsEditDialogOpen(true);
-  };
-
-  const TaskCard = ({ task }: { task: any }) => (
-    <Card className="hover:shadow-md transition-shadow border-dashed  bg-transparent">
-      <CardContent className="">
-        <div className="flex justify-between items-start">
-          <div className="flex flex-col  items-start  mb-2">
-            <div className="flex text-xs text-muted-foreground mb-1">
-              <span>{new Date(task.createdAt).toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {task.isCompleted ? (
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              ) : (
-                <Circle className="w-5 h-5 text-gray-400" />
-              )}
-              <h3
-                className={`font-medium ${
-                  task.isCompleted
-                    ? "text-primary line-through"
-                    : "text-primary"
-                }`}
-              >
-                {task.title}
-              </h3>
-            </div>
-          </div>
-
-          {/* Task Actions Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <ActionButton
-                size="icon-sm"
-                variant="ghost"
-                className="cursor-pointer rounded-full"
-              >
-                <MoreHorizontal className="w-4 h-4" />
-              </ActionButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              {!task.isCompleted && (
-                <DropdownMenuItem
-                  onClick={() => handleCompleteTask(task.id)}
-                  disabled={actionLoading === task.id}
-                  className="text-green-600 focus:text-green-600"
-                >
-                  <CircleCheck className="w-4 h-4 mr-2" />
-                  Complete
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                onClick={() => handleEditTask(task)}
-                className="text-blue-600 focus:text-blue-600"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleDeleteTask(task.id)}
-                disabled={actionLoading === task.id}
-                className="text-red-600 focus:text-red-600"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {task.description && (
-          <p
-            className={`text-sm mb-3 ${
-              task.isCompleted ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            {task.description}
-          </p>
-        )}
-
-        <div className="flex items-center gap-4 text-xs text-gray-500">
-          {task.dueDate && (
-            <div className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
-            </div>
-          )}
-          {task.reminderDate && (
-            <div className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              <span>
-                Reminder: {new Date(task.reminderDate).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   if (loading) {
     return (
@@ -299,225 +112,495 @@ export default function DashboardPage() {
     );
   }
 
-  return (
-    <div className="p-10">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <ActionButton size="sm" onClick={createTask} loading={isLoading}>
-          <Plus size={16} />{" "}
-          <span className="hidden sm:inline">Create Task</span>
-        </ActionButton>
-      </div>
-
-      {/* Task Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        <Card className="backdrop-blur-md bg-white/10 border-white/20 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-primary">Total Tasks</p>
-                <p className="text-2xl font-bold text-blue-300">
-                  {tasks.length}
-                </p>
-              </div>
-              <div className="bg-blue-500/20 p-3 rounded-full backdrop-blur-sm border border-blue-400/30">
-                <Calendar className="w-6 h-6 text-blue-300" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="backdrop-blur-md bg-white/10 border-white/20 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-primary">Completed</p>
-                <p className="text-2xl font-bold text-green-400">
-                  {completedTasks.length}
-                </p>
-              </div>
-              <div className="bg-green-500/20 p-3 rounded-full backdrop-blur-sm border border-green-400/30">
-                <CheckCircle className="w-6 h-6 text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="backdrop-blur-md bg-white/10 border-white/20 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-primary">Incomplete</p>
-                <p className="text-2xl font-bold text-orange-400">
-                  {incompleteTasks.length}
-                </p>
-              </div>
-              <div className="bg-orange-500/20 p-3 rounded-full backdrop-blur-sm border border-orange-400/30">
-                <Circle className="w-6 h-6 text-orange-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tasks Section */}
-      {tasksLoading ? (
-        <div className="flex justify-center items-center min-h-[200px] mt-8">
-          <Spinner />
-        </div>
-      ) : tasks.length === 0 ? (
-        <div className="text-center py-12 mt-8">
-          <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Calendar className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-primary mb-2">
-            No tasks yet
-          </h3>
-          <p className="text-gray-500 mb-4">
-            Create your first task to get started!
-          </p>
-          <ActionButton size="sm" onClick={createTask} loading={isLoading}>
-            <Plus size={16} /> Create Task
-          </ActionButton>
-        </div>
-      ) : (
-        <div className="mt-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold text-gray-400">My Tasks</h2>
-
-            {/* Filter Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-600 transition-colors">
-                  <Filter className="w-4 h-4" />
-                  <span>
-                    {filter === "all"
-                      ? "All"
-                      : filter === "completed"
-                      ? "Completed"
-                      : "Incomplete"}
-                  </span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={() => setFilter("all")}
-                  className={
-                    filter === "all"
-                      ? "bg-gray-50 font-medium text-blue-500"
-                      : "text-primary"
-                  }
-                >
-                  All ({tasks.length})
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setFilter("incomplete")}
-                  className={
-                    filter === "incomplete"
-                      ? "bg-gray-50 font-medium text-orange-600"
-                      : "text-primary"
-                  }
-                >
-                  Incomplete ({incompleteTasks.length})
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setFilter("completed")}
-                  className={
-                    filter === "completed"
-                      ? "bg-gray-50 font-medium text-green-600"
-                      : "text-primary"
-                  }
-                >
-                  Completed ({completedTasks.length})
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Filtered Tasks Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredTasks.map((task) => (
-              <TaskCard key={task.id} task={task} />
-            ))}
-          </div>
-
-          {filteredTasks.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-500">
-                No{" "}
-                {filter === "completed"
-                  ? "completed"
-                  : filter === "incomplete"
-                  ? "incomplete"
-                  : ""}{" "}
-                tasks found.
+  if (!isPro) {
+    return (
+      <div className="p-6 md:p-10">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold">Dashboard</h1>
+              <p className="text-muted-foreground mt-1">
+                Basic task overview and insights
               </p>
             </div>
-          )}
+            <Button onClick={() => router.push("/choose-plan")}>
+              Upgrade to PRO for detailed analytics
+            </Button>
+          </div>
+
+          {/* Simplified Analytics Dashboard */}
+          <AnalyticsDashboard isPro={false} simplified={true} />
+
+          {/* Quick Actions */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => router.push("/task")}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full">
+                      <Calendar className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">View All Tasks</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Manage your tasks and to-dos
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => router.push("/settings")}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-green-100 dark:bg-green-900/50 rounded-full">
+                      <Target className="w-6 h-6 text-green-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Profile Settings</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Manage your account and preferences
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => router.push("/task")}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-full">
+                      <Plus className="w-6 h-6 text-purple-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Create New Task</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Add a new task to your list
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Task</DialogTitle>
-            <DialogDescription>
-              Fill in the details below to create a new task.
-            </DialogDescription>
-          </DialogHeader>
+  const completionRate =
+    analytics?.summary?.totalTasks && analytics.summary.totalTasks > 0
+      ? Math.round(
+          (analytics.summary.completedTasks / analytics.summary.totalTasks) *
+            100
+        )
+      : 0;
 
-          <div className="mt-4">
-            <CreateTask
-              onSuccess={() => {
-                setIsDialogOpen(false);
-                // Refresh tasks after creating a new one
-                if (user) {
-                  getLoggedInUserAllTasks(user.id).then((result) => {
-                    if (result.success) {
-                      setTasks(result.tasks || []);
-                    }
-                  });
-                }
-              }}
-            />
+  return (
+    <div className="p-6 md:p-10">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              Track your productivity and task completion patterns
+            </p>
           </div>
-        </DialogContent>
-      </Dialog>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Task</DialogTitle>
-            <DialogDescription>
-              Update the task details below.
-            </DialogDescription>
-          </DialogHeader>
+          <div className="flex items-center gap-3">
+            <Select
+              value={timeRange}
+              onValueChange={(value: any) => setTimeRange(value)}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="1y">Last year</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <div className="mt-4">
-            {editingTask && (
-              <EditTask
-                task={editingTask}
-                onSuccess={() => {
-                  setIsEditDialogOpen(false);
-                  setEditingTask(null);
-                  // Refresh tasks after editing
-                  if (user) {
-                    getLoggedInUserAllTasks(user.id).then((result) => {
-                      if (result.success) {
-                        setTasks(result.tasks || []);
-                      }
-                    });
-                  }
-                }}
-                onCancel={() => {
-                  setIsEditDialogOpen(false);
-                  setEditingTask(null);
-                }}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCw
+                className={cn("w-4 h-4 mr-2", refreshing && "animate-spin")}
               />
-            )}
+              Refresh
+            </Button>
+
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Tasks */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Tasks
+                  </p>
+                  <h3 className="text-2xl font-bold mt-1">
+                    {analytics?.summary?.totalTasks || 0}
+                  </h3>
+                  <div className="flex items-center gap-1 mt-2">
+                    <TrendingUp className="w-3 h-3 text-green-500" />
+                    <span className="text-xs text-green-500">
+                      +12% from last month
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/50">
+                  <Target className="w-6 h-6 text-blue-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Completion Rate */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Completion Rate
+                  </p>
+                  <h3 className="text-2xl font-bold mt-1">{completionRate}%</h3>
+                  <div className="flex items-center gap-1 mt-2">
+                    {completionRate >= 70 ? (
+                      <TrendingUp className="w-3 h-3 text-green-500" />
+                    ) : (
+                      <TrendingDown className="w-3 h-3 text-red-500" />
+                    )}
+                    <span
+                      className={cn(
+                        "text-xs",
+                        completionRate >= 70 ? "text-green-500" : "text-red-500"
+                      )}
+                    >
+                      {completionRate >= 70
+                        ? "Great progress!"
+                        : "Needs improvement"}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/50">
+                  <CheckCircle className="w-6 h-6 text-green-500" />
+                </div>
+              </div>
+              <Progress value={completionRate} className="mt-4" />
+            </CardContent>
+          </Card>
+
+          {/* Pending Tasks */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Pending Tasks
+                  </p>
+                  <h3 className="text-2xl font-bold mt-1">
+                    {analytics?.summary?.incompleteTasks || 0}
+                  </h3>
+                  <div className="flex items-center gap-1 mt-2">
+                    <Clock className="w-3 h-3 text-yellow-500" />
+                    <span className="text-xs text-yellow-500">
+                      {analytics?.summary?.tasksDueThisWeek || 0} due this week
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/50">
+                  <Clock className="w-6 h-6 text-yellow-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Overdue Tasks */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Overdue Tasks
+                  </p>
+                  <h3 className="text-2xl font-bold mt-1">
+                    {analytics?.summary?.overdueTasks || 0}
+                  </h3>
+                  <div className="flex items-center gap-1 mt-2">
+                    <AlertCircle className="w-3 h-3 text-red-500" />
+                    <span className="text-xs text-red-500">
+                      {(analytics?.summary?.overdueTasks ?? 0) > 0
+                        ? "Needs attention"
+                        : "All caught up!"}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/50">
+                  <AlertCircle className="w-6 h-6 text-red-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Completion Trend */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold flex items-center">
+                <TrendingUp className="w-4 h-4 mr-2 text-blue-500" />
+                Completion Trend
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 flex items-center justify-center text-muted-foreground border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="text-center">
+                  <BarChart3 className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                  <p>Completion trend chart</p>
+                  <p className="text-xs mt-1">
+                    (Chart component to be implemented)
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Task Distribution */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold flex items-center">
+                <PieChart className="w-4 h-4 mr-2 text-purple-500" />
+                Task Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 flex items-center justify-center text-muted-foreground border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="text-center">
+                  <PieChart className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                  <p>Task distribution chart</p>
+                  <p className="text-xs mt-1">
+                    (Chart component to be implemented)
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Categories and Labels */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Categories */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader>
+              <CardTitle className="text-lg">Tasks by Category</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {analytics?.categories?.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  No categories found
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {analytics?.categories?.map((category: any) => {
+                    const percentage =
+                      category.total > 0
+                        ? Math.round(
+                            (category.completed / category.total) * 100
+                          )
+                        : 0;
+                    return (
+                      <div key={category.name} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            />
+                            <span className="text-sm font-medium">
+                              {category.name}
+                            </span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {category.completed}/{category.total} tasks
+                          </div>
+                        </div>
+                        <Progress value={percentage} className="h-2" />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Labels */}
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader>
+              <CardTitle className="text-lg">Most Used Labels</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {analytics?.labels?.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  No labels found
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {analytics?.labels
+                    ?.sort((a: any, b: any) => b.count - a.count)
+                    .slice(0, 8)
+                    .map((label: any) => (
+                      <div
+                        key={label.name}
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: label.color }}
+                          />
+                          <span className="text-sm font-medium">
+                            {label.name}
+                          </span>
+                        </div>
+                        <Badge variant="secondary" className="ml-auto">
+                          {label.count}
+                        </Badge>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Productivity Insights */}
+        <Card className="mt-6 hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Activity className="w-5 h-5 mr-2 text-green-500" />
+              Productivity Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {analytics?.summary?.mostProductiveDay || "Monday"}
+                </div>
+                <div className="text-sm text-green-600 dark:text-green-400 mt-1">
+                  Most productive day
+                </div>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {analytics?.summary?.averageTasksPerDay || "3-5"}
+                </div>
+                <div className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                  Avg. tasks per day
+                </div>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20">
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {analytics?.summary?.currentStreak || "7"}
+                </div>
+                <div className="text-sm text-purple-600 dark:text-purple-400 mt-1">
+                  Day streak
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => router.push("/task")}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full">
+                    <Calendar className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">View All Tasks</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Manage your tasks and to-dos
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => router.push("/settings")}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-green-100 dark:bg-green-900/50 rounded-full">
+                    <Target className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Profile Settings</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Manage your account and preferences
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => router.push("/task")}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-full">
+                    <Plus className="w-6 h-6 text-purple-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Create New Task</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Add a new task to your list
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

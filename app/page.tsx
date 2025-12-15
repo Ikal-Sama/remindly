@@ -1,6 +1,5 @@
 "use client";
 
-import { Metadata } from "next";
 import SubscriptionsPlan from "@/components/shared/subs-plan";
 import { Button } from "@/components/ui/button";
 import Aurora from "@/components/Aurora.jsx";
@@ -78,7 +77,7 @@ export default function page() {
       <section className="py-20 px-4">
         <div className="relative w-full h-64 md:h-96 lg:h-128 max-w-6xl mx-auto">
           <Image
-            src="/images/dashboard-image.png"
+            src="/images/dashboard.png"
             alt="dashboard"
             fill
             className="object-contain object-center rounded-lg"

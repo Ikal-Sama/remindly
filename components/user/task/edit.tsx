@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
+import CategorySelector from "@/components/ui/category-selector";
+import LabelSelector from "@/components/ui/label-selector";
 import {
   Popover,
   PopoverContent,
@@ -17,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateTask } from "@/app/action/task";
 import { authClient } from "@/lib/auth/auth-client";
+import { useAnalyticsUpdates } from "@/hooks/use-analytics-updates";
 
 interface EditTaskProps {
   task: any;
@@ -26,6 +29,8 @@ interface EditTaskProps {
 
 export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const { onTaskUpdated } = useAnalyticsUpdates();
+
   const [title, setTitle] = useState(task.title || "");
   const [description, setDescription] = useState(task.description || "");
   const [dueDate, setDueDate] = useState<Date | undefined>(
@@ -33,6 +38,12 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
   );
   const [reminderDate, setReminderDate] = useState<Date | undefined>(
     task.reminderDate ? new Date(task.reminderDate) : undefined
+  );
+  const [categoryId, setCategoryId] = useState<string | undefined>(
+    task.categoryId || undefined
+  );
+  const [labelIds, setLabelIds] = useState<string[]>(
+    task.labels ? task.labels.map((taskLabel: any) => taskLabel.label.id) : []
   );
   const [isPro, setIsPro] = useState(false);
 
@@ -91,10 +102,13 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
         description,
         dueDate,
         reminderDate,
+        categoryId,
+        labelIds,
       });
 
       if (result.success) {
         toast.success("Task updated successfully!");
+        onTaskUpdated();
         onSuccess();
       } else {
         toast.error(result.error || "Failed to update task");
@@ -108,7 +122,7 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
         <Input
@@ -159,31 +173,49 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
         </div>
 
         {isPro && (
-          <div className="space-y-2">
-            <Label>Reminder Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !reminderDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {reminderDate ? format(reminderDate, "PPP") : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={reminderDate}
-                  onSelect={setReminderDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <>
+            <div className="space-y-2">
+              <Label>Reminder Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !reminderDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {reminderDate ? format(reminderDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={reminderDate}
+                    onSelect={setReminderDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <CategorySelector
+                selectedCategory={categoryId}
+                onCategoryChange={setCategoryId}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <LabelSelector
+                selectedLabels={labelIds}
+                onLabelsChange={setLabelIds}
+                disabled={isLoading}
+              />
+            </div>
+          </>
         )}
       </div>
 

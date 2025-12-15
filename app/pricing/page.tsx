@@ -43,9 +43,10 @@ export default function PricingPage() {
                 <Check className="w-5 h-5 text-green-500 mr-3" />
                 <span>Email notifications</span>
               </li>
+
               <li className="flex items-center">
                 <Check className="w-5 h-5 text-green-500 mr-3" />
-                <span>Web app access</span>
+                <span>Simple analytics</span>
               </li>
             </ul>
           </div>
@@ -89,7 +90,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-center">
                 <Check className="w-5 h-5 text-yellow-400 mr-3" />
-                <span>Analytics & insights</span>
+                <span>Detailed analytics & insights</span>
               </li>
             </ul>
           </div>

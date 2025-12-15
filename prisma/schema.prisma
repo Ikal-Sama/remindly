@@ -25,6 +25,8 @@ model User {
   accounts      Account[]
   subscriptions UserSubscription[]
   tasks         Task[]
+  categories    Category[]
+  labels        Label[]
   stripeCustomerId String?  // Stripe customer id (cus_...)
 
   @@unique([email])
@@ -124,17 +126,21 @@ model Task {
   description   String
   dueDate       DateTime
   reminderDate  DateTime? // For custom reminder dates (PRO feature)
+  categoryId    String?   // Category reference (PRO feature)
   isCompleted   Boolean   @default(false)
   userId        String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   notifications EmailNotification[]
+  taskLabels    TaskLabel[]
   
   @@index([userId])
   @@index([dueDate])
   @@index([reminderDate])
+  @@index([categoryId])
   @@map("task")
 }
 
@@ -150,4 +156,52 @@ model EmailNotification {
   @@index([taskId])
   @@index([scheduledFor])
   @@map("email_notification")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  color       String   @default("#3B82F6") // Hex color code
+  description String?
+  userId      String   // User-specific categories
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  
+  @@unique([userId, name]) // Unique category name per user
+  @@index([userId])
+  @@map("category")
+}
+
+model Label {
+  id          String   @id @default(cuid())
+  name        String
+  color       String   @default("#10B981") // Hex color code
+  userId      String   // User-specific labels
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskLabels  TaskLabel[]
+  
+  @@unique([userId, name]) // Unique label name per user
+  @@index([userId])
+  @@map("label")
+}
+
+model TaskLabel {
+  id      String @id @default(cuid())
+  taskId  String
+  labelId String
+  createdAt DateTime @default(now())
+  
+  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  
+  @@unique([taskId, labelId]) // Prevent duplicate labels on same task
+  @@index([taskId])
+  @@index([labelId])
+  @@map("task_label")
 }

@@ -391,7 +391,10 @@ export const ModelName = {
   SubscriptionPlan: 'SubscriptionPlan',
   UserSubscription: 'UserSubscription',
   Task: 'Task',
-  EmailNotification: 'EmailNotification'
+  EmailNotification: 'EmailNotification',
+  Category: 'Category',
+  Label: 'Label',
+  TaskLabel: 'TaskLabel'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -407,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "subscriptionPlan" | "userSubscription" | "task" | "emailNotification"
+    modelProps: "user" | "session" | "account" | "verification" | "subscriptionPlan" | "userSubscription" | "task" | "emailNotification" | "category" | "label" | "taskLabel"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1003,6 +1006,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Category: {
+      payload: Prisma.$CategoryPayload<ExtArgs>
+      fields: Prisma.CategoryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CategoryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CategoryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload>
+        }
+        findFirst: {
+          args: Prisma.CategoryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CategoryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload>
+        }
+        findMany: {
+          args: Prisma.CategoryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload>[]
+        }
+        create: {
+          args: Prisma.CategoryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload>
+        }
+        createMany: {
+          args: Prisma.CategoryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CategoryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload>[]
+        }
+        delete: {
+          args: Prisma.CategoryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload>
+        }
+        update: {
+          args: Prisma.CategoryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload>
+        }
+        deleteMany: {
+          args: Prisma.CategoryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CategoryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CategoryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload>[]
+        }
+        upsert: {
+          args: Prisma.CategoryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CategoryPayload>
+        }
+        aggregate: {
+          args: Prisma.CategoryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCategory>
+        }
+        groupBy: {
+          args: Prisma.CategoryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CategoryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CategoryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CategoryCountAggregateOutputType> | number
+        }
+      }
+    }
+    Label: {
+      payload: Prisma.$LabelPayload<ExtArgs>
+      fields: Prisma.LabelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LabelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LabelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        findFirst: {
+          args: Prisma.LabelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LabelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        findMany: {
+          args: Prisma.LabelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>[]
+        }
+        create: {
+          args: Prisma.LabelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        createMany: {
+          args: Prisma.LabelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LabelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>[]
+        }
+        delete: {
+          args: Prisma.LabelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        update: {
+          args: Prisma.LabelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        deleteMany: {
+          args: Prisma.LabelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LabelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LabelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>[]
+        }
+        upsert: {
+          args: Prisma.LabelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LabelPayload>
+        }
+        aggregate: {
+          args: Prisma.LabelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLabel>
+        }
+        groupBy: {
+          args: Prisma.LabelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LabelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LabelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LabelCountAggregateOutputType> | number
+        }
+      }
+    }
+    TaskLabel: {
+      payload: Prisma.$TaskLabelPayload<ExtArgs>
+      fields: Prisma.TaskLabelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TaskLabelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TaskLabelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload>
+        }
+        findFirst: {
+          args: Prisma.TaskLabelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TaskLabelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload>
+        }
+        findMany: {
+          args: Prisma.TaskLabelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload>[]
+        }
+        create: {
+          args: Prisma.TaskLabelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload>
+        }
+        createMany: {
+          args: Prisma.TaskLabelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TaskLabelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload>[]
+        }
+        delete: {
+          args: Prisma.TaskLabelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload>
+        }
+        update: {
+          args: Prisma.TaskLabelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload>
+        }
+        deleteMany: {
+          args: Prisma.TaskLabelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TaskLabelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TaskLabelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload>[]
+        }
+        upsert: {
+          args: Prisma.TaskLabelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TaskLabelPayload>
+        }
+        aggregate: {
+          args: Prisma.TaskLabelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTaskLabel>
+        }
+        groupBy: {
+          args: Prisma.TaskLabelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TaskLabelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TaskLabelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TaskLabelCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1138,6 +1363,7 @@ export const TaskScalarFieldEnum = {
   description: 'description',
   dueDate: 'dueDate',
   reminderDate: 'reminderDate',
+  categoryId: 'categoryId',
   isCompleted: 'isCompleted',
   userId: 'userId',
   createdAt: 'createdAt',
@@ -1156,6 +1382,41 @@ export const EmailNotificationScalarFieldEnum = {
 } as const
 
 export type EmailNotificationScalarFieldEnum = (typeof EmailNotificationScalarFieldEnum)[keyof typeof EmailNotificationScalarFieldEnum]
+
+
+export const CategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  color: 'color',
+  description: 'description',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
+
+
+export const LabelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  color: 'color',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type LabelScalarFieldEnum = (typeof LabelScalarFieldEnum)[keyof typeof LabelScalarFieldEnum]
+
+
+export const TaskLabelScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  labelId: 'labelId',
+  createdAt: 'createdAt'
+} as const
+
+export type TaskLabelScalarFieldEnum = (typeof TaskLabelScalarFieldEnum)[keyof typeof TaskLabelScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1383,6 +1644,9 @@ export type GlobalOmitConfig = {
   userSubscription?: Prisma.UserSubscriptionOmit
   task?: Prisma.TaskOmit
   emailNotification?: Prisma.EmailNotificationOmit
+  category?: Prisma.CategoryOmit
+  label?: Prisma.LabelOmit
+  taskLabel?: Prisma.TaskLabelOmit
 }
 
 /* Types for Logging */

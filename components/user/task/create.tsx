@@ -18,6 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import CategorySelector from "@/components/ui/category-selector";
+import LabelSelector from "@/components/ui/label-selector";
 import {
   Popover,
   PopoverContent,
@@ -30,6 +32,7 @@ import { createTaskFormSchema } from "@/lib/validation/task";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAnalyticsUpdates } from "@/hooks/use-analytics-updates";
 
 type CreateTaskProps = {
   onSuccess?: () => void;
@@ -38,6 +41,7 @@ type CreateTaskProps = {
 const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
   const session = authClient.useSession();
   const user = session.data?.user;
+  const { onTaskCreated } = useAnalyticsUpdates();
 
   const [isPro, setIsPro] = useState(false);
 
@@ -72,6 +76,8 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
       description: "",
       dueDate: new Date(),
       reminderDate: undefined,
+      categoryId: undefined,
+      labelIds: [],
     },
   });
 
@@ -106,13 +112,14 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
     }
 
     toast.success("Task created successfully");
+    onTaskCreated(false); // New tasks are not completed by default
     form.reset();
     onSuccess?.();
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         <FormField
           control={form.control}
           name="title"
@@ -218,6 +225,45 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
             )}
           />
         )}
+
+        {isPro && (
+          <>
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <CategorySelector
+                      selectedCategory={field.value}
+                      onCategoryChange={field.onChange}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="labelIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <LabelSelector
+                      selectedLabels={field.value || []}
+                      onLabelsChange={field.onChange}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
+
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (

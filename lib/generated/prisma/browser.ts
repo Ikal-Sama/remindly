@@ -57,3 +57,18 @@ export type Task = Prisma.TaskModel
  * 
  */
 export type EmailNotification = Prisma.EmailNotificationModel
+/**
+ * Model Category
+ * 
+ */
+export type Category = Prisma.CategoryModel
+/**
+ * Model Label
+ * 
+ */
+export type Label = Prisma.LabelModel
+/**
+ * Model TaskLabel
+ * 
+ */
+export type TaskLabel = Prisma.TaskLabelModel

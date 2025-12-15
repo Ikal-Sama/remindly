@@ -118,6 +118,9 @@ export default function Navbar() {
             {session?.user && session.user.emailVerified ? (
               <>
                 <ActionButtonSimple variant="secondary">
+                  <Link href="/task">Tasks</Link>
+                </ActionButtonSimple>
+                <ActionButtonSimple variant="secondary">
                   <Link href="/dashboard">Dashboard</Link>
                 </ActionButtonSimple>
                 <Profile />
@@ -229,6 +232,17 @@ export default function Navbar() {
                 {session?.user && session.user.emailVerified ? (
                   <>
                     <ActionButtonSimple variant="secondary" className="w-full">
+                      <Link
+                        href="/task"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Tasks
+                      </Link>
+                    </ActionButtonSimple>
+                    <ActionButtonSimple
+                      variant="secondary"
+                      className="w-full mt-2"
+                    >
                       <Link
                         href="/dashboard"
                         onClick={() => setMobileMenuOpen(false)}

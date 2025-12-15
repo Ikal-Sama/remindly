@@ -7,6 +7,8 @@ export const createTaskFormSchema = z
     description: z.string().min(2).max(200),
     dueDate: z.date(),
     reminderDate: z.date().optional(),
+    categoryId: z.string().optional(),
+    labelIds: z.array(z.string()).optional(),
   })
   .refine(
     (data) => {
