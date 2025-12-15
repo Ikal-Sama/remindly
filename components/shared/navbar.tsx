@@ -132,28 +132,38 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-2">
             <ModeToggle />
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="mobile-menu relative"
-            >
-              {session?.user && session.user.image ? (
-                <img
-                  src={session.user.image}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <User size={20} />
-              )}
-              {mobileMenuOpen && (
-                <X
-                  size={16}
-                  className="absolute -top-1 -right-1 bg-background rounded-full p-1"
-                />
-              )}
-            </Button>
+            {session?.user && session.user.emailVerified ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="mobile-menu relative"
+              >
+                {session.user.image ? (
+                  <img
+                    src={session.user.image}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src="/profile-picture.png"
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                )}
+                {mobileMenuOpen && (
+                  <X
+                    size={16}
+                    className="absolute -top-1 -right-1 bg-background rounded-full p-1"
+                  />
+                )}
+              </Button>
+            ) : (
+              <Button size="sm">
+                <Link href="/login">Sign In</Link>
+              </Button>
+            )}
           </div>
         </div>
 
