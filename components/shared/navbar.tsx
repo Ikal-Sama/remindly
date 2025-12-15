@@ -189,6 +189,13 @@ export default function Navbar() {
               >
                 Contact
               </Link>
+              <Link
+                href="/settings"
+                className="block py-2 px-3 text-sm font-medium hover:bg-accent rounded-md"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Settings
+              </Link>
 
               <Button
                 size="sm"
