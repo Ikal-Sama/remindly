@@ -56,6 +56,16 @@ export function LoginForm({
       { ...values, callbackURL: "/dashboard" },
       {
         onError: (err) => {
+          // Check if error is related to email verification
+          if (
+            err.error.message?.includes("email not verified") ||
+            err.error.message?.includes("verify your email")
+          ) {
+            toast.error(
+              "Please verify your email before logging in. Check your inbox for the verification link."
+            );
+            return;
+          }
           toast.error(err.error.message || "Failed to login.");
         },
         onSuccess: () => {
