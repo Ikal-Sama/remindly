@@ -159,10 +159,12 @@ export async function POST(req: NextRequest) {
           status,
           planId,
           stripePriceId: priceId ?? undefined,
-          currentPeriodStart: new Date(
-            subscription.current_period_start * 1000
-          ),
-          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          currentPeriodStart: subscription.current_period_start
+            ? new Date(subscription.current_period_start * 1000)
+            : new Date(),
+          currentPeriodEnd: subscription.current_period_end
+            ? new Date(subscription.current_period_end * 1000)
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days fallback
         };
 
         if (existingSubscription) {
