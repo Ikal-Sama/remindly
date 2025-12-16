@@ -36,6 +36,7 @@ import { useAnalyticsStore } from "@/stores/analytics-store";
 import AnalyticsDashboard from "@/components/analytics/analytics-dashboard";
 import { cn } from "@/lib/utils";
 import { AnalyticsCharts } from "@/components/analytics/analytics-charts";
+import { VerifyEmail } from "@/components/verify-email";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -57,6 +58,14 @@ export default function DashboardPage() {
           router.push("/login");
           return;
         }
+
+        // Check if email is verified
+        if (!session.data.user.emailVerified) {
+          setUser(session.data.user);
+          setLoading(false);
+          return;
+        }
+
         setUser(session.data.user);
       } catch (error) {
         console.error("Auth error:", error);
@@ -111,6 +120,11 @@ export default function DashboardPage() {
         <Spinner />
       </div>
     );
+  }
+
+  // Show VerifyEmail component if user's email is not verified
+  if (user && !user.emailVerified) {
+    return <VerifyEmail email={user.email} />;
   }
 
   if (!isPro) {

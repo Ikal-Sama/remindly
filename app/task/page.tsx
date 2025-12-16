@@ -48,6 +48,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { VerifyEmail } from "@/components/verify-email";
 
 interface Task {
   id: string;
@@ -125,6 +126,14 @@ export default function TaskListPage() {
           router.push("/login");
           return;
         }
+
+        // Check if email is verified
+        if (!session.data.user.emailVerified) {
+          setUser(session.data.user);
+          setLoading(false);
+          return;
+        }
+
         setUser(session.data.user);
       } catch (error) {
         console.error("Auth error:", error);
@@ -454,6 +463,11 @@ export default function TaskListPage() {
         <Spinner />
       </div>
     );
+  }
+
+  // Show VerifyEmail component if user's email is not verified
+  if (user && !user.emailVerified && user.email) {
+    return <VerifyEmail email={user.email} />;
   }
 
   return (
