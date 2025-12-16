@@ -13,21 +13,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const now = new Date();
-    now.setHours(0, 0, 0, 0); // Start of current day
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999); // End of current day
+    // Get current date in UTC
+    const today = new Date();
+    const todayUTC = new Date(
+      Date.UTC(
+        today.getUTCFullYear(),
+        today.getUTCMonth(),
+        today.getUTCDate(),
+        0,
+        0,
+        0,
+        0
+      )
+    );
 
-    // Get all tasks with upcoming reminders
+    // Get all tasks with reminders due today
     const tasksNeedingReminders = await prisma.task.findMany({
       where: {
         isCompleted: false,
         OR: [
-          // PRO plan: Custom reminder dates that are today
+          // PRO plan: Custom reminder dates that match today
           {
             reminderDate: {
-              gte: now,
-              lte: endOfDay,
+              gte: todayUTC,
+              lt: new Date(todayUTC.getTime() + 24 * 60 * 60 * 1000), // Before tomorrow
             },
             user: {
               subscriptions: {
@@ -43,8 +52,8 @@ export async function GET(request: NextRequest) {
           // FREE plan: Due date is exactly 2 days from now
           {
             dueDate: {
-              gte: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now start
-              lte: new Date(endOfDay.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now end
+              gte: new Date(todayUTC.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now start
+              lt: new Date(todayUTC.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from now start
             },
             user: {
               subscriptions: {
@@ -73,7 +82,50 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const emailPromises = tasksNeedingReminders.map(async (task: any) => {
+    // Filter tasks based on reminder date
+    const tasksToSendToday = tasksNeedingReminders.filter((task: any) => {
+      const subscription = task.user.subscriptions[0];
+      const isPro = subscription?.plan?.name === "PRO";
+
+      if (isPro && task.reminderDate) {
+        // For PRO plan: Check if reminder date is today in UTC
+        const reminderDateInUTC = new Date(
+          Date.UTC(
+            task.reminderDate.getUTCFullYear(),
+            task.reminderDate.getUTCMonth(),
+            task.reminderDate.getUTCDate(),
+            9,
+            0,
+            0,
+            0
+          )
+        );
+
+        return reminderDateInUTC.toDateString() === todayUTC.toDateString();
+      } else if (!isPro && task.dueDate) {
+        // For FREE plan: Check if due date is 2 days from now in UTC
+        const dueDateInUTC = new Date(
+          Date.UTC(
+            task.dueDate.getUTCFullYear(),
+            task.dueDate.getUTCMonth(),
+            task.dueDate.getUTCDate(),
+            0,
+            0,
+            0,
+            0
+          )
+        );
+
+        return (
+          dueDateInUTC.toDateString() ===
+          new Date(todayUTC.getTime() + 2 * 24 * 60 * 60 * 1000).toDateString()
+        );
+      }
+
+      return false;
+    });
+
+    const emailPromises = tasksToSendToday.map(async (task: any) => {
       const subscription = task.user.subscriptions[0];
       const isPro = subscription?.plan?.name === "PRO";
 
@@ -81,14 +133,32 @@ export async function GET(request: NextRequest) {
       let scheduledFor: Date;
 
       if (isPro && task.reminderDate) {
-        // PRO plan: Use custom reminder date
+        // PRO plan: Use custom reminder date at 9:00 AM UTC
         notificationType = "CUSTOM_REMINDER";
-        scheduledFor = task.reminderDate;
+        scheduledFor = new Date(
+          Date.UTC(
+            task.reminderDate.getUTCFullYear(),
+            task.reminderDate.getUTCMonth(),
+            task.reminderDate.getUTCDate(),
+            9,
+            0,
+            0,
+            0
+          )
+        );
       } else if (!isPro && task.dueDate) {
-        // FREE plan: Use 2-day before due date logic
+        // FREE plan: Use 2-day before due date at 9:00 AM UTC
         notificationType = "DUE_DATE_REMINDER";
         scheduledFor = new Date(
-          task.dueDate.getTime() - 2 * 24 * 60 * 60 * 1000
+          Date.UTC(
+            task.dueDate.getUTCFullYear(),
+            task.dueDate.getUTCMonth(),
+            task.dueDate.getUTCDate() - 2,
+            9,
+            0,
+            0,
+            0
+          )
         );
       } else {
         return; // Skip if conditions aren't met
@@ -139,7 +209,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      processed: tasksNeedingReminders.length,
+      processed: tasksToSendToday.length,
       message: "Email reminders processed successfully",
     });
   } catch (error) {
