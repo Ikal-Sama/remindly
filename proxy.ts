@@ -46,6 +46,11 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
+    // Skip Arcjet for Stripe webhooks - they are legitimate server-to-server requests
+    if (pathname.startsWith("/api/webhooks/stripe")) {
+      return NextResponse.next();
+    }
+
     try {
       const decision = await arcjetInstance.protect(request);
 
