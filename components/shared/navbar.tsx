@@ -11,6 +11,7 @@ import ActionButtonSimple from "../action-button-simple";
 import Profile from "../user/profile";
 import { Spinner } from "../ui/spinner";
 import { Menu, X, LogOut, User } from "lucide-react";
+import { useTheme } from "next-themes";
 
 const audiowide = Audiowide({
   weight: "400",
@@ -21,6 +22,16 @@ export default function Navbar() {
   const { data: session, isPending: loading } = authClient.useSession();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, systemTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const currentTheme = theme === "system" ? systemTheme : theme;
+  const logoSrc =
+    mounted && currentTheme === "dark" ? "/logo-light.png" : "/logo-dark.png";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -70,9 +81,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between relative z-50 h-16">
           <div className="flex items-center gap-5">
             <Link href="/">
-              <h1 className={`text-lg font-semibold ${audiowide.className}`}>
-                Remindly
-              </h1>
+              <img src={logoSrc} alt="Remindly" className="h-8 w-auto" />
             </Link>
 
             {/* Desktop Navigation */}

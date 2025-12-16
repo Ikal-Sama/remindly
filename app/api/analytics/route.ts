@@ -125,6 +125,37 @@ export async function GET(request: NextRequest) {
       (task) => task.isCompleted && new Date(task.updatedAt) >= thirtyDaysAgo
     ).length;
 
+    // Get completion data for the last 7 days
+    const completionTrend = [];
+    const today = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const completedTasksForDay = await prisma.task.count({
+        where: {
+          userId,
+          isCompleted: true,
+          updatedAt: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        },
+      });
+
+      completionTrend.push({
+        date: date.toISOString().split("T")[0],
+        completed: completedTasksForDay,
+      });
+    }
+
     return NextResponse.json({
       analytics: {
         summary: {
@@ -139,6 +170,7 @@ export async function GET(request: NextRequest) {
         },
         categories: categoryData,
         labels: labelData,
+        completionTrend,
       },
     });
   } catch (error) {

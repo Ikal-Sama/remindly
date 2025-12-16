@@ -35,6 +35,7 @@ import {
 import { useAnalyticsStore } from "@/stores/analytics-store";
 import AnalyticsDashboard from "@/components/analytics/analytics-dashboard";
 import { cn } from "@/lib/utils";
+import { AnalyticsCharts } from "@/components/analytics/analytics-charts";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -380,14 +381,12 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64 flex items-center justify-center text-muted-foreground border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
-                <div className="text-center">
-                  <BarChart3 className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                  <p>Completion trend chart</p>
-                  <p className="text-xs mt-1">
-                    (Chart component to be implemented)
-                  </p>
-                </div>
+              <div className="h-64">
+                <AnalyticsCharts
+                  completionTrend={analytics?.completionTrend}
+                  categories={analytics?.categories || []}
+                  type="completion"
+                />
               </div>
             </CardContent>
           </Card>
@@ -401,14 +400,12 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64 flex items-center justify-center text-muted-foreground border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
-                <div className="text-center">
-                  <PieChart className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                  <p>Task distribution chart</p>
-                  <p className="text-xs mt-1">
-                    (Chart component to be implemented)
-                  </p>
-                </div>
+              <div className="h-64">
+                <AnalyticsCharts
+                  completionTrend={analytics?.completionTrend}
+                  categories={analytics?.categories || []}
+                  type="distribution"
+                />
               </div>
             </CardContent>
           </Card>

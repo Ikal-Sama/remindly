@@ -3,6 +3,8 @@
 import { Mail, Facebook, Instagram, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Audiowide } from "next/font/google";
+import { useTheme } from "next-themes";
+import { useState, useEffect } from "react";
 
 const audiowide = Audiowide({
   weight: "400",
@@ -10,15 +12,24 @@ const audiowide = Audiowide({
 });
 
 export function Footer() {
+  const { theme, systemTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const currentTheme = theme === "system" ? systemTheme : theme;
+  const logoSrc =
+    mounted && currentTheme === "dark" ? "/logo-light.png" : "/logo-dark.png";
+
   return (
     <footer className="bg-muted/30 border-t z-50">
       <div className="container mx-auto px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="space-y-4">
-            <h3 className={`text-lg font-semibold ${audiowide.className}`}>
-              Remindly
-            </h3>
+            <img src={logoSrc} alt="Remindly" className="h-8 w-auto" />
             <p className="text-sm text-muted-foreground max-w-xs">
               Your smart task reminder app that helps you stay organized and
               productive.

@@ -26,6 +26,10 @@ export interface Analytics {
     color: string;
     count: number;
   }>;
+  completionTrend: Array<{
+    date: string;
+    completed: number;
+  }>;
 }
 
 interface AnalyticsStore {

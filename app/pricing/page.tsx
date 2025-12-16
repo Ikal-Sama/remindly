@@ -135,50 +135,6 @@ export default function PricingPage() {
             </table>
           </div>
         </div>
-
-        {/* FAQ Section */}
-        <div className="mt-20 max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            Frequently Asked Questions
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="font-semibold mb-2">
-                Can I change plans anytime?
-              </h3>
-              <p className="text-muted-foreground">
-                Yes, you can upgrade or downgrade your plan at any time. Changes
-                take effect immediately.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">
-                Is there a free trial for paid plans?
-              </h3>
-              <p className="text-muted-foreground">
-                Yes, we offer a 14-day free trial for Pro plan with full
-                features.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">
-                What payment methods do you accept?
-              </h3>
-              <p className="text-muted-foreground">
-                We accept all major credit cards and PayPal.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">
-                Can I cancel my subscription?
-              </h3>
-              <p className="text-muted-foreground">
-                Yes, you can cancel anytime. Your access continues until the end
-                of your billing period.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

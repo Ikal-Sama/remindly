@@ -8,16 +8,9 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  PieChart,
-  Target,
-  Zap,
   Calendar,
-  Users,
 } from "lucide-react";
 import { useAnalyticsStore } from "@/stores/analytics-store";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
 
 interface AnalyticsDashboardProps {
   isPro: boolean;
