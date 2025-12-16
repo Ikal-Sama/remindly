@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import Stripe from "stripe";
 import prisma from "@/lib/prisma";
+import { webhookProtection } from "@/lib/arcjet/config";
 
 // Configure Stripe with your secret key. API version will use the SDK default
 // or the version configured in your Stripe dashboard.
@@ -13,6 +14,38 @@ type SubscriptionWithPeriods = Stripe.Subscription & {
 };
 
 export async function POST(req: NextRequest) {
+  // Apply Arcjet webhook protection
+  try {
+    const decision = await webhookProtection.protect(req);
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
+        return NextResponse.json(
+          { error: "Webhook rate limit exceeded" },
+          { status: 429 }
+        );
+      }
+      if (decision.reason.isBot()) {
+        return NextResponse.json(
+          { error: "Unauthorized webhook source" },
+          { status: 403 }
+        );
+      }
+      if (decision.reason.isShield()) {
+        return NextResponse.json(
+          { error: "Webhook blocked by security shield" },
+          { status: 403 }
+        );
+      }
+      return NextResponse.json(
+        { error: "Webhook blocked by security policy" },
+        { status: 403 }
+      );
+    }
+  } catch (error) {
+    console.error("Arcjet webhook protection error:", error);
+    // Fail open for webhooks to avoid payment processing issues
+  }
+
   const body = await req.text();
   const headersList = await headers();
   const sig = headersList.get("stripe-signature");

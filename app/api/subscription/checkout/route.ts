@@ -2,9 +2,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
+import { arcjetInstance } from "@/lib/arcjet/config";
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply Arcjet protection before processing
+    const decision = await arcjetInstance.protect(request);
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded. Please try again later." },
+          { status: 429 }
+        );
+      }
+      if (decision.reason.isBot()) {
+        return NextResponse.json(
+          { error: "Bot traffic detected and blocked." },
+          { status: 403 }
+        );
+      }
+      if (decision.reason.isShield()) {
+        return NextResponse.json(
+          { error: "Request blocked by security shield." },
+          { status: 403 }
+        );
+      }
+      return NextResponse.json(
+        { error: "Request blocked by security policy." },
+        { status: 403 }
+      );
+    }
+
     const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session?.user || !session.user.email) {

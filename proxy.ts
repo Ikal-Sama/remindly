@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { arcjetInstance } from "@/lib/arcjet/config";
 
 const PROTECTED_ROUTES = [
   "/dashboard",
@@ -26,19 +27,74 @@ function isAuthenticated(request: NextRequest) {
   return !!(sessionCookie?.value && sessionCookie.value.length > 0);
 }
 
-export default function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip static files and Next internals
   if (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
     pathname.startsWith("/static") ||
     pathname.includes(".")
   ) {
     return NextResponse.next();
   }
 
+  // Handle API routes with Arcjet protection
+  if (pathname.startsWith("/api/")) {
+    // Skip Arcjet for auth endpoints (Better Auth handles its own security)
+    if (pathname.startsWith("/api/auth")) {
+      return NextResponse.next();
+    }
+
+    try {
+      const decision = await arcjetInstance.protect(request);
+
+      if (decision.isDenied()) {
+        console.warn("Arcjet blocked request:", {
+          reason: decision.reason,
+          ip:
+            request.headers.get("x-forwarded-for") ||
+            request.headers.get("x-real-ip") ||
+            "unknown",
+          userAgent: request.headers.get("user-agent"),
+          path: pathname,
+        });
+
+        if (decision.reason.isRateLimit()) {
+          return NextResponse.json(
+            { error: "Rate limit exceeded. Please try again later." },
+            { status: 429 }
+          );
+        }
+
+        if (decision.reason.isBot()) {
+          return NextResponse.json(
+            { error: "Bot traffic detected and blocked." },
+            { status: 403 }
+          );
+        }
+
+        if (decision.reason.isShield()) {
+          return NextResponse.json(
+            { error: "Request blocked by security shield." },
+            { status: 403 }
+          );
+        }
+
+        return NextResponse.json(
+          { error: "Request blocked by security policy." },
+          { status: 403 }
+        );
+      }
+    } catch (error) {
+      console.error("Arcjet proxy error:", error);
+      // Continue processing if Arcjet fails (fail open)
+    }
+
+    return NextResponse.next();
+  }
+
+  // Handle page routes with authentication
   const userIsAuthenticated = isAuthenticated(request);
   const protectedRoute = isRouteMatch(pathname, PROTECTED_ROUTES);
   const authRoute = isRouteMatch(pathname, AUTH_ROUTES);
