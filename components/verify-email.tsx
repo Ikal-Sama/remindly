@@ -19,8 +19,12 @@ import Link from "next/link";
 export function VerifyEmail({
   email,
   className,
+  onBack,
   ...props
-}: React.ComponentProps<"div"> & { email: string }) {
+}: React.ComponentProps<"div"> & {
+  email: string;
+  onBack?: () => void;
+}) {
   const [isResending, setIsResending] = useState(false);
   const [timeToNextResend, setTimeToNextResend] = useState(30);
   const interval = useRef<NodeJS.Timeout>(undefined);
@@ -109,12 +113,21 @@ export function VerifyEmail({
             </div>
 
             <div className="pt-4 border-t">
-              <Link
-                href="/login"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Back to sign in
-              </Link>
+              {onBack ? (
+                <button
+                  onClick={onBack}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Back to sign in
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Back to sign in
+                </Link>
+              )}
             </div>
           </div>
         </CardContent>

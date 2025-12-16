@@ -91,7 +91,9 @@ export function LoginForm({
   }
 
   if (showVerification) {
-    return <VerifyEmail email={email} />;
+    return (
+      <VerifyEmail email={email} onBack={() => setShowVerification(false)} />
+    );
   }
 
   return (
