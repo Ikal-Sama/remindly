@@ -220,7 +220,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Select
               value={timeRange}
               onValueChange={(value: any) => setTimeRange(value)}
