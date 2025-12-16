@@ -30,6 +30,8 @@ import { Field, FieldDescription } from "./ui/field";
 import { LoadingSwap } from "./loading-swap";
 import { SocialAuthButton } from "./social-auth-button";
 import Link from "next/link";
+import { VerifyEmail } from "./verify-email";
+import { useState } from "react";
 
 export const loginFormSchema = z.object({
   email: z.email(),
@@ -41,6 +43,9 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const [showVerification, setShowVerification] = useState(false);
+  const [email, setEmail] = useState("");
+
   const form = useForm<z.infer<typeof loginFormSchema>>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
@@ -56,14 +61,24 @@ export function LoginForm({
       { ...values, callbackURL: "/dashboard" },
       {
         onError: (err) => {
+          // Debug: Log the actual error
+          console.log("Login error:", err);
+
           // Check if error is related to email verification
+          const errorMessage = err.error.message?.toLowerCase() || "";
           if (
-            err.error.message?.includes("email not verified") ||
-            err.error.message?.includes("verify your email")
+            errorMessage.includes("email not verified") ||
+            errorMessage.includes("verify your email") ||
+            errorMessage.includes("email verification") ||
+            errorMessage.includes("unverified") ||
+            err.error.code === "EMAIL_NOT_VERIFIED"
           ) {
             toast.error(
               "Please verify your email before logging in. Check your inbox for the verification link."
             );
+            // Show VerifyEmail component directly
+            setEmail(values.email);
+            setShowVerification(true);
             return;
           }
           toast.error(err.error.message || "Failed to login.");
@@ -74,6 +89,11 @@ export function LoginForm({
       }
     );
   }
+
+  if (showVerification) {
+    return <VerifyEmail email={email} />;
+  }
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
