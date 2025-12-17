@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/auth";
+import { headers } from "next/headers";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth.api.getSession({
-      headers: request.headers,
+      headers: await headers(),
     });
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -45,15 +46,42 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Convert to plain objects to avoid serialization issues
+    const plainTasks = tasks.map((task) => ({
+      ...task,
+      dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+      reminderDate: task.reminderDate ? task.reminderDate.toISOString() : null,
+      createdAt: task.createdAt.toISOString(),
+      updatedAt: task.updatedAt.toISOString(),
+      category: task.category
+        ? {
+            ...task.category,
+            createdAt: task.category.createdAt.toISOString(),
+            updatedAt: task.category.updatedAt.toISOString(),
+          }
+        : null,
+      taskLabels: task.taskLabels.map((taskLabel) => ({
+        ...taskLabel,
+        createdAt: taskLabel.createdAt.toISOString(),
+        label: taskLabel.label
+          ? {
+              ...taskLabel.label,
+              createdAt: taskLabel.label.createdAt.toISOString(),
+              updatedAt: taskLabel.label.updatedAt.toISOString(),
+            }
+          : null,
+      })),
+    }));
+
     // Calculate basic metrics
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter((task) => task.isCompleted).length;
+    const totalTasks = plainTasks.length;
+    const completedTasks = plainTasks.filter((task) => task.isCompleted).length;
     const incompleteTasks = totalTasks - completedTasks;
     const completionRate =
       totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     // Category analytics
-    const categoryAnalytics = tasks.reduce((acc, task) => {
+    const categoryAnalytics = plainTasks.reduce((acc, task) => {
       const categoryName = task.category?.name || "Uncategorized";
       if (!acc[categoryName]) {
         acc[categoryName] = {
@@ -73,7 +101,7 @@ export async function GET(request: NextRequest) {
     const categoryData = Object.values(categoryAnalytics);
 
     // Label analytics
-    const labelAnalytics = tasks.reduce((acc, task) => {
+    const labelAnalytics = plainTasks.reduce((acc, task) => {
       task.taskLabels.forEach((taskLabel: any) => {
         const labelName = taskLabel.label.name;
         if (!acc[labelName]) {
@@ -100,14 +128,14 @@ export async function GET(request: NextRequest) {
     endOfWeek.setDate(startOfWeek.getDate() + 6);
     endOfWeek.setHours(23, 59, 59, 999);
 
-    const tasksDueThisWeek = tasks.filter((task) => {
+    const tasksDueThisWeek = plainTasks.filter((task) => {
       if (!task.dueDate) return false;
       const dueDate = new Date(task.dueDate);
       return dueDate >= startOfWeek && dueDate <= endOfWeek;
     }).length;
 
     // Overdue tasks
-    const overdueTasks = tasks.filter((task) => {
+    const overdueTasks = plainTasks.filter((task) => {
       if (!task.dueDate || task.isCompleted) return false;
       return new Date(task.dueDate) < now;
     }).length;
@@ -116,12 +144,12 @@ export async function GET(request: NextRequest) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(now.getDate() - 30);
 
-    const tasksCreatedLast30Days = tasks.filter(
+    const tasksCreatedLast30Days = plainTasks.filter(
       (task) => new Date(task.createdAt) >= thirtyDaysAgo
     ).length;
 
     // Tasks completed in last 30 days
-    const tasksCompletedLast30Days = tasks.filter(
+    const tasksCompletedLast30Days = plainTasks.filter(
       (task) => task.isCompleted && new Date(task.updatedAt) >= thirtyDaysAgo
     ).length;
 
