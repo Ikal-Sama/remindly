@@ -3,7 +3,6 @@ import { v2 as cloudinary } from "cloudinary";
 import { auth } from "@/lib/auth/auth";
 import prisma from "@/lib/prisma";
 import { arcjetInstance } from "@/lib/arcjet/config";
-import { headers } from "next/headers";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -13,7 +12,7 @@ cloudinary.config({
   secure: true,
 });
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     // Apply Arcjet protection before processing
     const decision = await arcjetInstance.protect(request);
