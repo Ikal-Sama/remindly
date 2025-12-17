@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
               lt: new Date(todayUTC.getTime() + 24 * 60 * 60 * 1000), // Before tomorrow
             },
             user: {
+              emailVerified: true,
               subscriptions: {
                 some: {
                   status: "active",
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
               lt: new Date(todayUTC.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from now start
             },
             user: {
+              emailVerified: true,
               subscriptions: {
                 some: {
                   status: "active",
@@ -82,48 +84,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Filter tasks based on reminder date
-    const tasksToSendToday = tasksNeedingReminders.filter((task: any) => {
-      const subscription = task.user.subscriptions[0];
-      const isPro = subscription?.plan?.name === "PRO";
-
-      if (isPro && task.reminderDate) {
-        // For PRO plan: Check if reminder date is today in UTC
-        const reminderDateInUTC = new Date(
-          Date.UTC(
-            task.reminderDate.getUTCFullYear(),
-            task.reminderDate.getUTCMonth(),
-            task.reminderDate.getUTCDate(),
-            9,
-            0,
-            0,
-            0
-          )
-        );
-
-        return reminderDateInUTC.toDateString() === todayUTC.toDateString();
-      } else if (!isPro && task.dueDate) {
-        // For FREE plan: Check if due date is 2 days from now in UTC
-        const dueDateInUTC = new Date(
-          Date.UTC(
-            task.dueDate.getUTCFullYear(),
-            task.dueDate.getUTCMonth(),
-            task.dueDate.getUTCDate(),
-            0,
-            0,
-            0,
-            0
-          )
-        );
-
-        return (
-          dueDateInUTC.toDateString() ===
-          new Date(todayUTC.getTime() + 2 * 24 * 60 * 60 * 1000).toDateString()
-        );
-      }
-
-      return false;
-    });
+    // The database query already filtered tasks correctly, no need for additional filtering
+    const tasksToSendToday = tasksNeedingReminders;
 
     const emailPromises = tasksToSendToday.map(async (task: any) => {
       const subscription = task.user.subscriptions[0];
@@ -133,33 +95,13 @@ export async function GET(request: NextRequest) {
       let scheduledFor: Date;
 
       if (isPro && task.reminderDate) {
-        // PRO plan: Use custom reminder date at 9:00 AM UTC
+        // PRO plan: Use todayUTC + 9 hours (9:00 AM UTC)
         notificationType = "CUSTOM_REMINDER";
-        scheduledFor = new Date(
-          Date.UTC(
-            task.reminderDate.getUTCFullYear(),
-            task.reminderDate.getUTCMonth(),
-            task.reminderDate.getUTCDate(),
-            9,
-            0,
-            0,
-            0
-          )
-        );
+        scheduledFor = new Date(todayUTC.getTime() + 9 * 60 * 60 * 1000);
       } else if (!isPro && task.dueDate) {
-        // FREE plan: Use 2-day before due date at 9:00 AM UTC
+        // FREE plan: Use todayUTC + 9 hours (9:00 AM UTC) - 2-day logic already handled by Prisma query
         notificationType = "DUE_DATE_REMINDER";
-        scheduledFor = new Date(
-          Date.UTC(
-            task.dueDate.getUTCFullYear(),
-            task.dueDate.getUTCMonth(),
-            task.dueDate.getUTCDate() - 2,
-            9,
-            0,
-            0,
-            0
-          )
-        );
+        scheduledFor = new Date(todayUTC.getTime() + 9 * 60 * 60 * 1000);
       } else {
         return; // Skip if conditions aren't met
       }
