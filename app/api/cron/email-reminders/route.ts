@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/emails/sendEmail";
 import { taskReminderEmail } from "@/lib/emails/taskReminderEmail";
+import { headers } from "next/headers";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Verify cron secret to prevent unauthorized access
-    const authHeader = request.headers.get("authorization");
+    const headersList = await headers();
+    const authHeader = headersList.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {

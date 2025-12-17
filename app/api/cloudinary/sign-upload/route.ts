@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { auth } from "@/lib/auth/auth";
 import prisma from "@/lib/prisma";
 import { arcjetInstance } from "@/lib/arcjet/config";
+import { headers } from "next/headers";
 
 // Configure Cloudinary
 cloudinary.config({
