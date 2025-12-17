@@ -97,11 +97,40 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
 
     setIsLoading(true);
     try {
+      // Convert dates to UTC midnight to avoid timezone issues
+      const normalizedDueDate = dueDate
+        ? new Date(
+            Date.UTC(
+              dueDate.getFullYear(),
+              dueDate.getMonth(),
+              dueDate.getDate(),
+              0,
+              0,
+              0,
+              0
+            )
+          )
+        : undefined;
+
+      const normalizedReminderDate = reminderDate
+        ? new Date(
+            Date.UTC(
+              reminderDate.getFullYear(),
+              reminderDate.getMonth(),
+              reminderDate.getDate(),
+              0,
+              0,
+              0,
+              0
+            )
+          )
+        : undefined;
+
       const result = await updateTask(task.id, {
         title,
         description,
-        dueDate,
-        reminderDate,
+        dueDate: normalizedDueDate,
+        reminderDate: normalizedReminderDate,
         categoryId,
         labelIds,
       });

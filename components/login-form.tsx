@@ -32,6 +32,7 @@ import { SocialAuthButton } from "./social-auth-button";
 import Link from "next/link";
 import { VerifyEmail } from "./verify-email";
 import { useState } from "react";
+import { ForgotPasswordForm } from "./forgot-password-form";
 
 export const loginFormSchema = z.object({
   email: z.email(),
@@ -44,6 +45,7 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const router = useRouter();
   const [showVerification, setShowVerification] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
 
   const form = useForm<z.infer<typeof loginFormSchema>>({
@@ -90,6 +92,14 @@ export function LoginForm({
     );
   }
 
+  if (showForgotPassword) {
+    return (
+      <div className={cn("flex flex-col gap-6", className)} {...props}>
+        <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
+      </div>
+    );
+  }
+
   if (showVerification) {
     return (
       <VerifyEmail email={email} onBack={() => setShowVerification(false)} />
@@ -129,9 +139,13 @@ export function LoginForm({
                   <FormItem>
                     <div className="flex items-center justify-between">
                       <FormLabel>Password</FormLabel>
-                      <Link href="/forgot-password" className="text-sm">
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(true)}
+                        className="text-sm text-primary hover:underline"
+                      >
                         Forgot password?
-                      </Link>
+                      </button>
                     </div>
                     <FormControl>
                       <PasswordInput {...field} />

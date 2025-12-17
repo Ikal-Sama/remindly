@@ -89,7 +89,36 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
       return;
     }
 
-    const result = await createTaskAction(values, user.id);
+    // Convert dates to UTC midnight to avoid timezone issues
+    const normalizedValues = {
+      ...values,
+      dueDate: new Date(
+        Date.UTC(
+          values.dueDate.getFullYear(),
+          values.dueDate.getMonth(),
+          values.dueDate.getDate(),
+          0,
+          0,
+          0,
+          0
+        )
+      ),
+      reminderDate: values.reminderDate
+        ? new Date(
+            Date.UTC(
+              values.reminderDate.getFullYear(),
+              values.reminderDate.getMonth(),
+              values.reminderDate.getDate(),
+              0,
+              0,
+              0,
+              0
+            )
+          )
+        : undefined,
+    };
+
+    const result = await createTaskAction(normalizedValues, user.id);
     if (!result.success) {
       switch (result.error) {
         case "Unauthorized": {
