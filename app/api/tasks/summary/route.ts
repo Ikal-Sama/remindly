@@ -20,9 +20,24 @@ export async function GET() {
       },
     });
 
+    // Convert to plain objects to avoid serialization issues
+    const plainTasks = tasks.map((task) => ({
+      ...task,
+      dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+      createdAt: task.createdAt.toISOString(),
+      updatedAt: task.updatedAt.toISOString(),
+      category: task.category
+        ? {
+            ...task.category,
+            createdAt: task.category.createdAt.toISOString(),
+            updatedAt: task.category.updatedAt.toISOString(),
+          }
+        : null,
+    }));
+
     // Calculate basic metrics
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter((task) => task.isCompleted).length;
+    const totalTasks = plainTasks.length;
+    const completedTasks = plainTasks.filter((task) => task.isCompleted).length;
     const incompleteTasks = totalTasks - completedTasks;
     const completionRate =
       totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -37,7 +52,7 @@ export async function GET() {
     endOfWeek.setDate(startOfWeek.getDate() + 6);
     endOfWeek.setHours(23, 59, 59, 999);
 
-    const tasksDueThisWeek = tasks.filter((task) => {
+    const tasksDueThisWeek = plainTasks.filter((task) => {
       if (!task.dueDate) return false;
       const dueDate = new Date(task.dueDate);
       return (
@@ -46,7 +61,7 @@ export async function GET() {
     }).length;
 
     // Calculate overdue tasks
-    const overdueTasks = tasks.filter((task) => {
+    const overdueTasks = plainTasks.filter((task) => {
       if (!task.dueDate || task.isCompleted) return false;
       return new Date(task.dueDate) < now;
     }).length;

@@ -9,7 +9,14 @@ export async function GET() {
       where: { isActive: true },
     });
 
-    return NextResponse.json({ plans });
+    // Convert to plain objects to avoid serialization issues
+    const plainPlans = plans.map((plan) => ({
+      ...plan,
+      createdAt: plan.createdAt.toISOString(),
+      updatedAt: plan.updatedAt.toISOString(),
+    }));
+
+    return NextResponse.json({ plans: plainPlans });
   } catch (error) {
     console.error("Error fetching plans:", error);
 
@@ -27,6 +34,8 @@ export async function GET() {
           unlimitedTasks: false,
         },
         isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
       {
         id: "pro-default",
@@ -40,6 +49,8 @@ export async function GET() {
           unlimitedTasks: true,
         },
         isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
     ];
 
