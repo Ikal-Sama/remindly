@@ -45,6 +45,8 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPro, setIsProState] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [hasAnyPlan, setHasAnyPlan] = useState(false);
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "1y">(
     "30d"
   );
@@ -89,13 +91,25 @@ export default function DashboardPage() {
 
         if (response.ok) {
           const data = await response.json();
-          const currentPlan: string | undefined =
+          const currentPlanName: string | undefined =
             data?.currentSubscription?.plan?.name;
-          setIsProState(currentPlan === "PRO");
-          setIsPro(currentPlan === "PRO");
+          setCurrentPlan(currentPlanName || null);
+          setHasAnyPlan(!!currentPlanName);
+          setIsProState(currentPlanName === "PRO");
+          setIsPro(currentPlanName === "PRO");
+        } else {
+          // No subscription found
+          setCurrentPlan(null);
+          setHasAnyPlan(false);
+          setIsProState(false);
+          setIsPro(false);
         }
       } catch (error) {
         console.error("Error fetching subscription:", error);
+        setCurrentPlan(null);
+        setHasAnyPlan(false);
+        setIsProState(false);
+        setIsPro(false);
       }
     };
 
@@ -139,13 +153,154 @@ export default function DashboardPage() {
                 Basic task overview and insights
               </p>
             </div>
-            <Button onClick={() => router.push("/choose-plan")}>
-              Upgrade to PRO for detailed analytics
-            </Button>
+            {hasAnyPlan ? (
+              <Button onClick={() => router.push("/choose-plan")}>
+                Upgrade to PRO for detailed analytics
+              </Button>
+            ) : (
+              <Button onClick={() => router.push("/choose-plan")}>
+                Select a PLAN
+              </Button>
+            )}
           </div>
 
-          {/* Simplified Analytics Dashboard */}
-          <AnalyticsDashboard isPro={false} simplified={true} />
+          {/* Basic Metrics for FREE users */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Total Tasks */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Total Tasks
+                    </p>
+                    <h3 className="text-2xl font-bold mt-1">
+                      {analytics?.summary?.totalTasks || 0}
+                    </h3>
+                    <div className="flex items-center gap-1 mt-2">
+                      <TrendingUp className="w-3 h-3 text-green-500" />
+                      <span className="text-xs text-green-500">
+                        +12% from last month
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/50">
+                    <Target className="w-6 h-6 text-blue-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Completion Rate */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Completion Rate
+                    </p>
+                    <h3 className="text-2xl font-bold mt-1">
+                      {analytics?.summary?.totalTasks &&
+                      analytics?.summary?.totalTasks > 0
+                        ? Math.round(
+                            ((analytics?.summary?.completedTasks || 0) /
+                              analytics?.summary?.totalTasks) *
+                              100
+                          )
+                        : 0}
+                      %
+                    </h3>
+                    <div className="flex items-center gap-1 mt-2">
+                      {((analytics?.summary?.totalTasks &&
+                        analytics.summary.totalTasks > 0 &&
+                        Math.round(
+                          ((analytics.summary.completedTasks || 0) /
+                            analytics.summary.totalTasks) *
+                            100
+                        )) ||
+                        0) >= 70 ? (
+                        <TrendingUp className="w-3 h-3 text-green-500" />
+                      ) : (
+                        <TrendingDown className="w-3 h-3 text-red-500" />
+                      )}
+                      <span className="text-xs text-green-500">
+                        Great progress!
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/50">
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                  </div>
+                </div>
+                <Progress
+                  value={
+                    analytics?.summary?.totalTasks &&
+                    analytics.summary.totalTasks > 0
+                      ? Math.round(
+                          (analytics.summary.completedTasks /
+                            analytics.summary.totalTasks) *
+                            100
+                        )
+                      : 0
+                  }
+                  className="mt-4"
+                />
+              </CardContent>
+            </Card>
+
+            {/* Pending Tasks */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Due Tasks
+                    </p>
+                    <h3 className="text-2xl font-bold mt-1">
+                      {analytics?.summary?.tasksDueThisWeek || 0}
+                    </h3>
+                    <div className="flex items-center gap-1 mt-2">
+                      <Clock className="w-3 h-3 text-yellow-500" />
+                      <span className="text-xs text-yellow-500">
+                        {analytics?.summary?.tasksDueThisWeek || 0} due this
+                        week
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/50">
+                    <Clock className="w-6 h-6 text-yellow-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Overdue Tasks */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Overdue Tasks
+                    </p>
+                    <h3 className="text-2xl font-bold mt-1">
+                      {analytics?.summary?.overdueTasks || 0}
+                    </h3>
+                    <div className="flex items-center gap-1 mt-2">
+                      <AlertCircle className="w-3 h-3 text-red-500" />
+                      <span className="text-xs text-red-500">
+                        {(analytics?.summary?.overdueTasks ?? 0) > 0
+                          ? "Needs attention"
+                          : "All caught up!"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/50">
+                    <AlertCircle className="w-6 h-6 text-red-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Quick Actions */}
           <div className="mt-8">
@@ -235,37 +390,41 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Select
-              value={timeRange}
-              onValueChange={(value: any) => setTimeRange(value)}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
-                <SelectItem value="1y">Last year</SelectItem>
-              </SelectContent>
-            </Select>
+            {hasAnyPlan && (
+              <>
+                <Select
+                  value={timeRange}
+                  onValueChange={(value: any) => setTimeRange(value)}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Last 7 days</SelectItem>
+                    <SelectItem value="30d">Last 30 days</SelectItem>
+                    <SelectItem value="90d">Last 90 days</SelectItem>
+                    <SelectItem value="1y">Last year</SelectItem>
+                  </SelectContent>
+                </Select>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCw
-                className={cn("w-4 h-4 mr-2", refreshing && "animate-spin")}
-              />
-              Refresh
-            </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                >
+                  <RefreshCw
+                    className={cn("w-4 h-4 mr-2", refreshing && "animate-spin")}
+                  />
+                  Refresh
+                </Button>
 
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
