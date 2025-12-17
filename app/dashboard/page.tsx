@@ -117,10 +117,9 @@ export default function DashboardPage() {
   }, [user, setIsPro]);
 
   useEffect(() => {
-    if (isPro) {
-      fetchAnalytics();
-    }
-  }, [isPro, fetchAnalytics]);
+    // Fetch analytics for all users, but show different data based on plan
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

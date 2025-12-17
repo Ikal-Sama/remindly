@@ -60,26 +60,55 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       fetchAnalytics: async () => {
         const { isPro } = get();
-        if (!isPro) {
-          set({ error: "Analytics is a PRO feature" });
-          return;
-        }
-
         set({ isLoading: true, error: null });
 
         try {
-          const response = await fetch("/api/analytics");
+          const endpoint = isPro ? "/api/analytics" : "/api/tasks/summary";
+          const response = await fetch(endpoint);
+
           if (response.ok) {
             const data = await response.json();
-            set({ analytics: data.analytics, isLoading: false });
+            set({
+              analytics: isPro
+                ? data.analytics
+                : {
+                    summary: data,
+                    categories: [],
+                    labels: [],
+                    completionTrend: [],
+                  },
+              isLoading: false,
+            });
           } else if (response.status === 403) {
-            set({ error: "Analytics is a PRO feature", isLoading: false });
+            // For free users, try to get basic task data
+            if (!isPro) {
+              const basicResponse = await fetch("/api/tasks/summary");
+              if (basicResponse.ok) {
+                const basicData = await basicResponse.json();
+                set({
+                  analytics: {
+                    summary: basicData,
+                    categories: [],
+                    labels: [],
+                    completionTrend: [],
+                  },
+                  isLoading: false,
+                });
+                return;
+              }
+            }
+            set({
+              error: isPro
+                ? "Analytics is a PRO feature"
+                : "Failed to load task data",
+              isLoading: false,
+            });
           } else {
-            set({ error: "Failed to load analytics", isLoading: false });
+            set({ error: "Failed to load data", isLoading: false });
           }
         } catch (error) {
-          console.error("Error fetching analytics:", error);
-          set({ error: "Failed to load analytics", isLoading: false });
+          console.error("Error fetching data:", error);
+          set({ error: "Failed to load data", isLoading: false });
         }
       },
 
