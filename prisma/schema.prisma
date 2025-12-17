@@ -141,6 +141,9 @@ model Task {
   @@index([dueDate])
   @@index([reminderDate])
   @@index([categoryId])
+  @@index([userId, isCompleted]) // For user task filtering
+  @@index([userId, dueDate]) // For user's due tasks
+  @@index([userId, createdAt]) // For user's recent tasks
   @@map("task")
 }
 
@@ -155,6 +158,7 @@ model EmailNotification {
   
   @@index([taskId])
   @@index([scheduledFor])
+  @@index([type, scheduledFor]) // For scheduled email processing
   @@map("email_notification")
 }
 

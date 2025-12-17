@@ -66,15 +66,16 @@ export function ProfileImageUpload({
 
           if (response.ok) {
             const data = await response.json();
-            console.log("Profile image updated in database:", data);
+            // Profile image updated in database
 
             // Update the Zustand store state
             updateUserProfile({ image: imageUrl });
 
-            console.log("Zustand store updated with new image");
+            // Zustand store updated with new image
           }
         } catch (error) {
-          console.error("Failed to update profile in database:", error);
+          // Failed to update profile in database
+          toast.error("Failed to save image to database");
         }
 
         onImageUpdate(imageUrl);
@@ -88,7 +89,7 @@ export function ProfileImageUpload({
   const handleUploadError = useCallback((error: any) => {
     setIsUploading(false);
     setUploadProgress(0);
-    console.error("Upload error:", error);
+    // Upload error handled
     toast.error("Failed to upload image. Please try again.");
   }, []);
 

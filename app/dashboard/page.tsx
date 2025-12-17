@@ -33,7 +33,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAnalyticsStore } from "@/stores/analytics-store";
-import AnalyticsDashboard from "@/components/analytics/analytics-dashboard";
 import { cn } from "@/lib/utils";
 import { AnalyticsCharts } from "@/components/analytics/analytics-charts";
 import { VerifyEmail } from "@/components/verify-email";
@@ -117,9 +116,11 @@ export default function DashboardPage() {
   }, [user, setIsPro]);
 
   useEffect(() => {
-    // Fetch analytics for all users, but show different data based on plan
-    fetchAnalytics();
-  }, [fetchAnalytics]);
+    // Only fetch analytics after subscription status is determined
+    if (hasAnyPlan !== undefined && hasAnyPlan !== null) {
+      fetchAnalytics();
+    }
+  }, [fetchAnalytics, hasAnyPlan]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

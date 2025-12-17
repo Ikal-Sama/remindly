@@ -60,7 +60,8 @@ export default function CategorySelector({
         setCategories(data.categories || []);
       }
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      // Error fetching categories
+      toast.error("Failed to load categories");
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +100,7 @@ export default function CategorySelector({
         toast.error(error.error || "Failed to create category");
       }
     } catch (error) {
-      console.error("Error creating category:", error);
+      // Error creating category
       toast.error("Failed to create category");
     } finally {
       setIsCreating(false);

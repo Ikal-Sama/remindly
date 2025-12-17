@@ -24,7 +24,7 @@ export const arcjetInstance = arcjet({
     fixedWindow({
       mode: "LIVE",
       window: "15m", // 15 minute window
-      max: 100, // allow 100 requests per 15 minutes per IP
+      max: 100, // allow 1000 requests per 15 minutes per IP (increased for development)
     }),
   ],
 });

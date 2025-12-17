@@ -1,6 +1,8 @@
+"use cache";
+
 import Image from "next/image";
 
-export default function AboutPage() {
+export default async function AboutPage() {
   return (
     <div className="p-6 md:p-10 mt-10 flex flex-col space-y-12 md:space-y-16 items-center justify-center">
       <div className="w-full md:w-3/4 lg:w-1/2 text-center">

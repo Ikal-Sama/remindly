@@ -22,8 +22,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import CreateTask from "@/components/user/task/create";
+import TaskCardSkeleton from "@/components/user/task/task-card-skeleton";
 import EditTask from "@/components/user/task/edit";
+import CreateTask from "@/components/user/task/create";
 import {
   Plus,
   CheckCircle,
@@ -766,8 +767,20 @@ export default function TaskListPage() {
 
       {/* Tasks Section */}
       {tasksLoading ? (
-        <div className="flex justify-center items-center min-h-[200px] mt-8">
-          <Spinner />
+        <div className="mt-8 flex flex-wrap gap-4">
+          {/* Show 3 skeleton cards as placeholder */}
+          <div>
+            <TaskCardSkeleton />
+          </div>
+          <div>
+            <TaskCardSkeleton />
+          </div>
+          <div>
+            <TaskCardSkeleton />
+          </div>
+          <div>
+            <TaskCardSkeleton />
+          </div>
         </div>
       ) : tasks.length === 0 ? (
         <div className="text-center py-12 mt-8">

@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { memo, useMemo } from "react";
 
 // Register ChartJS components
 ChartJS.register(
@@ -37,55 +38,64 @@ interface AnalyticsChartsProps {
   type?: ChartType;
 }
 
-export function AnalyticsCharts({
+export const AnalyticsCharts = memo(function AnalyticsCharts({
   completionTrend = [],
   categories = [],
   type = "both",
 }: AnalyticsChartsProps) {
   // Prepare completion trend data from analytics
-  const completionTrendData = {
-    labels:
-      completionTrend?.map((item) => {
-        const date = new Date(item.date);
-        return date.toLocaleDateString("en-US", { weekday: "short" });
-      }) || [],
-    datasets: [
-      {
-        label: "Tasks Completed",
-        data: completionTrend?.map((item) => item.completed) || [],
-        backgroundColor: "rgba(59, 130, 246, 0.8)",
-        borderColor: "rgba(59, 130, 246, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
+  const completionTrendData = useMemo(
+    () => ({
+      labels:
+        completionTrend?.map((item) => {
+          const date = new Date(item.date);
+          return date.toLocaleDateString("en-US", { weekday: "short" });
+        }) || [],
+      datasets: [
+        {
+          label: "Tasks Completed",
+          data: completionTrend?.map((item) => item.completed) || [],
+          backgroundColor: "rgba(59, 130, 246, 0.8)",
+          borderColor: "rgba(59, 130, 246, 1)",
+          borderWidth: 1,
+        },
+      ],
+    }),
+    [completionTrend]
+  );
 
-  const taskDistributionData = {
-    labels: categories.map((cat) => cat.name),
-    datasets: [
-      {
-        data: categories.map((cat) => cat.total),
-        backgroundColor: categories.map((cat) => {
-          // Convert hex to rgba with opacity
-          const r = parseInt(cat.color.slice(1, 3), 16);
-          const g = parseInt(cat.color.slice(3, 5), 16);
-          const b = parseInt(cat.color.slice(5, 7), 16);
-          return `rgba(${r}, ${g}, ${b}, 0.8)`;
-        }),
-        borderColor: categories.map((cat) => cat.color),
-        borderWidth: 1,
-      },
-    ],
-  };
+  const taskDistributionData = useMemo(
+    () => ({
+      labels: categories.map((cat) => cat.name),
+      datasets: [
+        {
+          data: categories.map((cat) => cat.total),
+          backgroundColor: categories.map((cat) => {
+            // Convert hex to rgba with opacity
+            const r = parseInt(cat.color.slice(1, 3), 16);
+            const g = parseInt(cat.color.slice(3, 5), 16);
+            const b = parseInt(cat.color.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, 0.8)`;
+          }),
+          borderColor: categories.map((cat) => cat.color),
+          borderWidth: 1,
+        },
+      ],
+    }),
+    [categories]
+  );
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top" as const,
+  const chartOptions = useMemo(
+    () => ({
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top" as const,
+        },
       },
-    },
-  };
+    }),
+    []
+  );
 
   // Render based on the type prop
   if (type === "completion") {
@@ -158,4 +168,4 @@ export function AnalyticsCharts({
       </Card>
     </div>
   );
-}
+});
