@@ -52,11 +52,11 @@ export async function GET() {
               },
             },
           },
-          // FREE plan: Due date is exactly 2 days from now
+          // FREE plan: Due date is exactly 1 day from now (tomorrow)
           {
             dueDate: {
-              gte: new Date(todayUTC.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now start
-              lt: new Date(todayUTC.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from now start
+              gte: new Date(todayUTC.getTime() + 1 * 24 * 60 * 60 * 1000), // 1 day from now start
+              lt: new Date(todayUTC.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now start
             },
             user: {
               emailVerified: true,
@@ -90,8 +90,11 @@ export async function GET() {
     const tasksToSendToday = tasksNeedingReminders;
 
     const emailPromises = tasksToSendToday.map(async (task: any) => {
-      const subscription = task.user.subscriptions[0];
-      const isPro = subscription?.plan?.name === "PRO";
+      // Find the active subscription, not just the first one
+      const activeSubscription = task.user.subscriptions.find(
+        (sub: any) => sub.status === "active"
+      );
+      const isPro = activeSubscription?.plan?.name === "PRO";
 
       let notificationType: string;
       let scheduledFor: Date;
