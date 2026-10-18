@@ -159,6 +159,11 @@ function Calendar({
           )
         },
         DayButton: CalendarDayButton,
+        // react-day-picker renders these as a bare <button> with no `type`,
+        // which defaults to submit inside a <form>. Both overrides exist purely
+        // to set type="button" so paging months cannot submit an enclosing form.
+        PreviousMonthButton: CalendarNavButton,
+        NextMonthButton: CalendarNavButton,
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
@@ -173,6 +178,13 @@ function Calendar({
       {...props}
     />
   )
+}
+
+function CalendarNavButton({
+  className,
+  ...props
+}: React.ComponentProps<"button">) {
+  return <button type="button" className={className} {...props} />
 }
 
 function CalendarDayButton({
@@ -191,6 +203,7 @@ function CalendarDayButton({
   return (
     <Button
       ref={ref}
+      type="button"
       variant="ghost"
       size="icon"
       data-day={day.date.toLocaleDateString()}
