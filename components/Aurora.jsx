@@ -116,7 +116,13 @@ export default function Aurora(props) {
     blend = 0.7,
   } = props;
   const propsRef = useRef(props);
-  propsRef.current = props;
+
+  // Keep the ref in sync after render rather than during it: writing to
+  // `.current` while rendering is not render-safe and is flagged by the
+  // react-hooks/refs rule.
+  useEffect(() => {
+    propsRef.current = props;
+  });
 
   const ctnDom = useRef(null);
 

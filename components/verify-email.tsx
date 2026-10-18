@@ -28,8 +28,31 @@ export function VerifyEmail({
   const [timeToNextResend, setTimeToNextResend] = useState(30);
   const interval = useRef<NodeJS.Timeout>(undefined);
 
+  // Declared before the effects that use it: the react-hooks rules require
+  // every value referenced by an effect to be initialised before it.
+  function startCountdownInterval() {
+    interval.current = setInterval(() => {
+      setTimeToNextResend((t) => {
+        const newT = t - 1;
+        if (newT <= 0) {
+          clearInterval(interval.current);
+          return 0;
+        }
+        return newT;
+      });
+    }, 1000);
+  }
+
+  function startEmailVerificationCountdown(time = 30) {
+    setTimeToNextResend(time);
+    startCountdownInterval();
+  }
+
   useEffect(() => {
-    startEmailVerificationCountdown();
+    // The countdown already starts at 30, so only the ticker needs starting -
+    // calling setTimeToNextResend here would be a synchronous setState inside
+    // the effect and trigger a cascading render.
+    startCountdownInterval();
   }, []);
 
   async function handleResendVerification() {
@@ -61,21 +84,6 @@ export function VerifyEmail({
     } finally {
       setIsResending(false);
     }
-  }
-
-  function startEmailVerificationCountdown(time = 30) {
-    setTimeToNextResend(time);
-
-    interval.current = setInterval(() => {
-      setTimeToNextResend((t) => {
-        const newT = t - 1;
-        if (newT <= 0) {
-          clearInterval(interval.current);
-          return 0;
-        }
-        return newT;
-      });
-    }, 1000);
   }
 
   return (

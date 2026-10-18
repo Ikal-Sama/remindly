@@ -40,19 +40,18 @@ export default function CategorySelector({
   disabled = false,
 }: CategorySelectorProps) {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // Starts as `true` because the first load happens on mount; this avoids a
+  // synchronous setState inside the mount effect, which triggers a cascading
+  // render. Creation appends locally rather than refetching, so this fetcher
+  // is only ever called from that effect.
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState("#3B82F6");
   const [newCategoryDescription, setNewCategoryDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
   const fetchCategories = async () => {
-    setIsLoading(true);
     try {
       const response = await fetch("/api/categories");
       if (response.ok) {
@@ -66,6 +65,14 @@ export default function CategorySelector({
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // `fetchCategories` awaits the network before its first setState, so this
+    // is not a synchronous update in the effect body; the rule cannot see
+    // through the async boundary.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCategories();
+  }, []);
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) {

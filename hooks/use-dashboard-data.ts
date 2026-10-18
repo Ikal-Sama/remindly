@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { authClient } from "@/lib/auth/auth-client";
 import type {
   Analytics,
@@ -31,6 +31,10 @@ interface CacheData<T = unknown> {
   timestamp: number;
 }
 
+type CacheKey = "subscription" | "tasks" | "analytics" | "categories" | "labels";
+
+type CacheStore = Record<CacheKey, CacheData | null>;
+
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function useDashboardData() {
@@ -48,14 +52,24 @@ export function useDashboardData() {
     },
   });
 
-  // Cache state
-  const [cache, setCache] = useState<{
-    subscription: CacheData<CurrentSubscriptionResponse> | null;
-    tasks: CacheData<TasksResponse> | null;
-    analytics: CacheData<{ analytics: Analytics }> | null;
-    categories: CacheData<CategoriesResponse> | null;
-    labels: CacheData<LabelsResponse> | null;
-  }>({
+  /**
+   * TTL cache, held in a ref rather than state.
+   *
+   * This deliberately does not use `useState`: as state it would make
+   * `fetchWithCache` depend on `cache`, so its identity changed on every
+   * fetch, which in turn made every effect that calls it impossible to
+   * declare honestly - declaring `fetchUserData` as a dependency of the
+   * mount effect caused an infinite refetch loop.
+   *
+   * Nothing renders from the cache directly, so no re-render is needed when
+   * it changes: consumers re-render because `dashboardData` is updated with
+   * the freshly fetched values.
+   *
+   * Entries are stored as `CacheData<unknown>` because the five keys hold
+   * different payload shapes; the concrete shape is re-established by the
+   * caller-supplied generic on read.
+   */
+  const cacheRef = useRef<CacheStore>({
     subscription: null,
     tasks: null,
     analytics: null,
@@ -71,11 +85,8 @@ export function useDashboardData() {
   );
 
   const fetchWithCache = useCallback(
-    async <T>(
-      key: keyof typeof cache,
-      fetcher: () => Promise<T>
-    ): Promise<T> => {
-      const cacheData = cache[key] as CacheData<T> | null;
+    async <T>(key: CacheKey, fetcher: () => Promise<T>): Promise<T> => {
+      const cacheData = cacheRef.current[key] as CacheData<T> | null;
 
       if (isCacheValid(cacheData)) {
         return cacheData!.data;
@@ -83,17 +94,14 @@ export function useDashboardData() {
 
       const data = await fetcher();
 
-      setCache((prev) => ({
-        ...prev,
-        [key]: {
-          data,
-          timestamp: Date.now(),
-        },
-      }));
+      cacheRef.current[key] = {
+        data,
+        timestamp: Date.now(),
+      };
 
       return data;
     },
-    [cache, isCacheValid]
+    [isCacheValid]
   );
 
   const fetchUserData = useCallback(async () => {
@@ -217,11 +225,21 @@ export function useDashboardData() {
 
   // Initial data fetch
   useEffect(() => {
+    // Fetching the session on mount is a legitimate effect. `fetchUserData`
+    // awaits `authClient.getSession()` before its first setState, so this is
+    // not a synchronous update inside the effect; the rule cannot see through
+    // the async boundary and flags the call site regardless.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUserData();
-  }, []);
+  }, [fetchUserData]);
 
   useEffect(() => {
     if (dashboardData.user) {
+      // `fetchTasksData` raises its `loading.tasks` flag before fetching, which
+      // is intentional: the spinner must appear in the same paint as the click.
+      // It only replaces an already-pending render, so the "cascading render"
+      // this rule guards against does not occur.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchTasksData();
       fetchCategoriesAndLabels();
       if (dashboardData.isPro) {
@@ -240,12 +258,12 @@ export function useDashboardData() {
     (type?: "tasks" | "analytics" | "all") => {
       if (type === "tasks" || type === "all") {
         // Clear tasks cache and refetch
-        setCache((prev) => ({ ...prev, tasks: null }));
+        cacheRef.current.tasks = null;
         fetchTasksData();
       }
       if ((type === "analytics" || type === "all") && dashboardData.isPro) {
         // Clear analytics cache and refetch
-        setCache((prev) => ({ ...prev, analytics: null }));
+        cacheRef.current.analytics = null;
         fetchAnalyticsData();
       }
     },

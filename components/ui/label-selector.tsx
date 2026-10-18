@@ -39,18 +39,17 @@ export default function LabelSelector({
   disabled = false,
 }: LabelSelectorProps) {
   const [labels, setLabels] = useState<Label[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // Starts as `true` because the first load happens on mount; this avoids a
+  // synchronous setState inside the mount effect, which triggers a cascading
+  // render. Creation appends locally rather than refetching, so this fetcher
+  // is only ever called from that effect.
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newLabelName, setNewLabelName] = useState("");
   const [newLabelColor, setNewLabelColor] = useState("#10B981");
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    fetchLabels();
-  }, []);
-
   const fetchLabels = async () => {
-    setIsLoading(true);
     try {
       const response = await fetch("/api/labels");
       if (response.ok) {
@@ -63,6 +62,14 @@ export default function LabelSelector({
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // `fetchLabels` awaits the network before its first setState, so this is
+    // not a synchronous update in the effect body; the rule cannot see through
+    // the async boundary.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchLabels();
+  }, []);
 
   const handleCreateLabel = async () => {
     if (!newLabelName.trim()) {
