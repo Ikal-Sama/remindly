@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart3,
@@ -23,7 +23,7 @@ export default function AnalyticsDashboard({
 }: AnalyticsDashboardProps) {
   const { analytics, isLoading, error, fetchAnalytics, setIsPro } =
     useAnalyticsStore();
-  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("30d");
+  
 
   useEffect(() => {
     setIsPro(isPro);

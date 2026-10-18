@@ -1,36 +1,8 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import type { Analytics } from "@/lib/types";
 
-export interface Analytics {
-  summary: {
-    totalTasks: number;
-    completedTasks: number;
-    incompleteTasks: number;
-    completionRate: number;
-    tasksDueThisWeek: number;
-    overdueTasks: number;
-    tasksCreatedLast30Days: number;
-    tasksCompletedLast30Days: number;
-    mostProductiveDay?: string;
-    averageTasksPerDay?: string;
-    currentStreak?: string;
-  };
-  categories: Array<{
-    name: string;
-    color: string;
-    total: number;
-    completed: number;
-  }>;
-  labels: Array<{
-    name: string;
-    color: string;
-    count: number;
-  }>;
-  completionTrend: Array<{
-    date: string;
-    completed: number;
-  }>;
-}
+export type { Analytics };
 
 interface AnalyticsStore {
   analytics: Analytics | null;

@@ -8,11 +8,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "../ui/button";
 import { authClient } from "@/lib/auth/auth-client";
 import Image from "next/image";
-import ActionButton from "../action-button";
-import ActionButtonSimple from "../action-button-simple";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { useUserStore } from "@/stores/user-store";

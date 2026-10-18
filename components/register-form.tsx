@@ -12,7 +12,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -48,11 +47,8 @@ export const registerFormSchema = z
 
 export function RegisterForm({
   className,
-  openEmailVerification,
   ...props
-}: React.ComponentProps<"div"> & {
-  openEmailVerification?: (email: string) => void;
-}) {
+}: React.ComponentProps<"div">) {
   const router = useRouter();
   const [showVerification, setShowVerification] = useState(false);
   const [email, setEmail] = useState("");

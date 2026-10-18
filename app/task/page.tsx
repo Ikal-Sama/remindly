@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,7 +18,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import TaskCardSkeleton from "@/components/user/task/task-card-skeleton";
@@ -31,7 +29,6 @@ import {
   Circle,
   Calendar,
   Filter,
-  DotSquare,
   CircleCheck,
   Trash2,
   MoreHorizontal,
@@ -108,7 +105,7 @@ export default function TaskListPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isPro, setIsPro] = useState(false);
+  const [, setIsPro] = useState(false);
 
   // Filter states
   const [completionFilter, setCompletionFilter] = useState<

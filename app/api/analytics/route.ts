@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
+import type { Analytics } from "@/lib/types";
 
 export async function GET() {
   try {
@@ -96,25 +97,28 @@ export async function GET() {
         acc[categoryName].completed++;
       }
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, Analytics["categories"][number]>);
 
     const categoryData = Object.values(categoryAnalytics);
 
     // Label analytics
     const labelAnalytics = plainTasks.reduce((acc, task) => {
-      task.taskLabels.forEach((taskLabel: any) => {
-        const labelName = taskLabel.label.name;
+      task.taskLabels.forEach((taskLabel) => {
+        // `label` is nullable in the serialised shape; skip orphaned joins.
+        const label = taskLabel.label;
+        if (!label) return;
+        const labelName = label.name;
         if (!acc[labelName]) {
           acc[labelName] = {
             name: labelName,
-            color: taskLabel.label.color,
+            color: label.color,
             count: 0,
           };
         }
         acc[labelName].count++;
       });
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, Analytics["labels"][number]>);
 
     const labelData = Object.values(labelAnalytics);
 

@@ -8,6 +8,14 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Loader2, Camera } from "lucide-react";
 import { useUserStore } from "@/stores/user-store";
+import type { ComponentProps } from "react";
+
+// `next-cloudinary` does not export its callback types, but they can be derived
+// from the widget's own props - which guarantees the handlers stay assignable
+// and their parameters stay contextually typed.
+type UploadWidgetProps = ComponentProps<typeof CldUploadWidget>;
+type UploadSuccessHandler = NonNullable<UploadWidgetProps["onSuccess"]>;
+type UploadErrorHandler = NonNullable<UploadWidgetProps["onError"]>;
 
 interface ProfileImageUploadProps {
   currentImage?: string;
@@ -46,13 +54,16 @@ export function ProfileImageUpload({
     };
   }, [userName]);
 
-  const handleUploadSuccess = useCallback(
-    async (result: any, { widget }: any) => {
+  const handleUploadSuccess: UploadSuccessHandler = useCallback(
+    async (result, { widget }) => {
       setIsUploading(false);
       setUploadProgress(100);
 
-      if (result.event === "success") {
-        const imageUrl = result.info.secure_url;
+      // Cloudinary types `info` as `string | CloudinaryUploadWidgetInfo`; a
+      // successful upload always yields the object form with `secure_url`.
+      const info = result.info;
+      if (result.event === "success" && info && typeof info === "object") {
+        const imageUrl = info.secure_url;
 
         // Update user profile in database via the same endpoint
         try {
@@ -65,7 +76,6 @@ export function ProfileImageUpload({
           });
 
           if (response.ok) {
-            const data = await response.json();
             // Profile image updated in database
 
             // Update the Zustand store state
@@ -73,7 +83,7 @@ export function ProfileImageUpload({
 
             // Zustand store updated with new image
           }
-        } catch (error) {
+        } catch {
           // Failed to update profile in database
           toast.error("Failed to save image to database");
         }
@@ -86,7 +96,7 @@ export function ProfileImageUpload({
     [onImageUpdate, updateUserProfile]
   );
 
-  const handleUploadError = useCallback((error: any) => {
+  const handleUploadError: UploadErrorHandler = useCallback(() => {
     setIsUploading(false);
     setUploadProgress(0);
     // Upload error handled

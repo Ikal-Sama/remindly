@@ -12,7 +12,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,7 +28,6 @@ import { authClient } from "@/lib/auth/auth-client";
 import { Field, FieldDescription } from "./ui/field";
 import { LoadingSwap } from "./loading-swap";
 import { SocialAuthButton } from "./social-auth-button";
-import Link from "next/link";
 import { VerifyEmail } from "./verify-email";
 import { useState } from "react";
 import { ForgotPasswordForm } from "./forgot-password-form";
@@ -59,7 +57,7 @@ export function LoginForm({
   const { isSubmitting } = form.formState;
 
   async function onSubmit(values: z.infer<typeof loginFormSchema>) {
-    const res = await authClient.signIn.email(
+    await authClient.signIn.email(
       { ...values, callbackURL: "/dashboard" },
       {
         onError: (err) => {

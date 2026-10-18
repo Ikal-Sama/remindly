@@ -12,12 +12,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth/auth-client";
 import SubscriptionHistory from "@/components/user/subscription-history";
 import { useUserStore } from "@/stores/user-store";
+import type { UserWithOAuth } from "@/lib/types";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = authClient.useSession();
   const { userProfile, setUserProfile } = useUserStore();
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserWithOAuth | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Redirect to login if not authenticated
@@ -28,8 +29,13 @@ export default function SettingsPage() {
   }, [session, sessionLoading, router]);
 
   useEffect(() => {
+    if (sessionLoading) return;
+
     const fetchUserData = async () => {
-      if (!session) return; // Don't fetch if not authenticated
+      if (!session) {
+        setLoading(false);
+        return;
+      }
 
       const result = await getUserWithOAuth();
       if (result.success && result.user) {
@@ -45,24 +51,8 @@ export default function SettingsPage() {
       setLoading(false);
     };
 
-    if (!sessionLoading && session) {
-      fetchUserData();
-    } else if (!sessionLoading && !session) {
-      setLoading(false);
-    }
+    fetchUserData();
   }, [session, sessionLoading, setUserProfile]);
-
-  // Sync local state with user data when it changes
-  useEffect(() => {
-    if (userData) {
-      setUserProfile({
-        id: userData.id,
-        name: userData.name || "",
-        email: userData.email,
-        image: userData.image || null,
-      });
-    }
-  }, [userData, setUserProfile]);
 
   const handleImageUpdate = (imageUrl: string) => {
     // Just update the Zustand store - database is handled in the upload component

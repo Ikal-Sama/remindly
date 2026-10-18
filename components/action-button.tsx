@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { Loader2, AlertTriangle, Trash2, LogOut } from "lucide-react";
+import { Loader2, AlertTriangle, Trash2 } from "lucide-react";
 
 export interface ActionButtonConfig {
   variant?:

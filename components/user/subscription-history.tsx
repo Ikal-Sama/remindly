@@ -5,27 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  maxTasks: number;
-  features: any;
-}
-
-interface UserSubscription {
-  id: string;
-  status: string;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  cancelledAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  plan: SubscriptionPlan;
-  stripeSubscriptionId: string | null;
-  stripePriceId: string | null;
-}
+import type {
+  SubscriptionHistoryResponse,
+  UserSubscription,
+} from "@/lib/types";
 
 export default function SubscriptionHistory() {
   const [subscriptions, setSubscriptions] = useState<UserSubscription[]>([]);
@@ -36,14 +19,14 @@ export default function SubscriptionHistory() {
     const fetchSubscriptionHistory = async () => {
       try {
         const response = await fetch("/api/subscription/history");
-        const data = await response.json();
+        const data = (await response.json()) as SubscriptionHistoryResponse;
 
         if (data.success) {
           setSubscriptions(data.subscriptions);
         } else {
           setError(data.error || "Failed to fetch subscription history");
         }
-      } catch (err) {
+      } catch {
         setError("Failed to fetch subscription history");
       } finally {
         setLoading(false);

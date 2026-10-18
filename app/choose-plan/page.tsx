@@ -5,7 +5,7 @@ import { authClient } from "@/lib/auth/auth-client";
 import SubscriptionsPlan from "@/components/shared/subs-plan";
 
 export default function ChoosePlanPage() {
-  const { data: session, isPending: loading } = authClient.useSession();
+  const { data: session } = authClient.useSession();
 
   // Redirect to login if not authenticated
   if (!session?.user) {
