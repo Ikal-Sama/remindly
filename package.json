@@ -58,6 +58,9 @@
     "zod": "^4.1.13",
     "zustand": "^5.0.9"
   },
+  "overrides": {
+    "@radix-ui/react-dismissable-layer": "1.2.1"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
