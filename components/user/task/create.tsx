@@ -31,7 +31,7 @@ import { authClient } from "@/lib/auth/auth-client";
 import { createTaskFormSchema } from "@/lib/validation/task";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, startOfTomorrow } from "@/lib/utils";
 import { useAnalyticsUpdates } from "@/hooks/use-analytics-updates";
 
 type CreateTaskProps = {
@@ -207,6 +207,7 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
                       selected={field.value}
                       onSelect={field.onChange}
                       initialFocus
+                      disabled={{ before: startOfTomorrow() }}
                     />
                   </PopoverContent>
                 </Popover>

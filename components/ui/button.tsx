@@ -41,6 +41,7 @@ function Button({
   variant,
   size,
   asChild = false,
+  type = "button",
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
@@ -51,6 +52,14 @@ function Button({
   return (
     <Comp
       data-slot="button"
+      // Default to "button" rather than the HTML default of "submit", so a
+      // button rendered inside a <form> - a popover trigger, a date picker
+      // button - cannot submit the form by accident. Real submit buttons pass
+      // type="submit" explicitly, and every form in this app already does.
+      //
+      // Skipped for asChild because the child may be an anchor, where `type`
+      // is not a valid attribute.
+      {...(asChild ? {} : { type })}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

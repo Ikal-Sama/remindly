@@ -12,6 +12,19 @@ export const createTaskFormSchema = z
   })
   .refine(
     (data) => {
+      // A task cannot be due today or in the past. Compare against the start of
+      // tomorrow so a time later today does not slip through.
+      const startOfTomorrow = new Date();
+      startOfTomorrow.setHours(24, 0, 0, 0);
+      return data.dueDate >= startOfTomorrow;
+    },
+    {
+      message: "Due date must be tomorrow or later",
+      path: ["dueDate"],
+    }
+  )
+  .refine(
+    (data) => {
       if (!data.reminderDate) return true;
 
       // Ensure reminder date is not equivalent to due date
