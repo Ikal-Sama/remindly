@@ -1,4 +1,5 @@
-// Run with: tsx prisma/seed.ts
+// Run with: npm run db:seed, npx prisma db seed, or tsx prisma/seed.ts
+import "./load-env";
 import prisma from "../lib/prisma";
 
 async function main() {
