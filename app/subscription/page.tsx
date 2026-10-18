@@ -34,7 +34,7 @@ export default function SubscriptionPage() {
         } else {
           setPlanName(null);
         }
-      } catch (err) {
+      } catch {
         setError("Something went wrong while fetching your subscription.");
       } finally {
         setIsLoading(false);

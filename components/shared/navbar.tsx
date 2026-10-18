@@ -1,33 +1,24 @@
 "use client";
-import { Audiowide } from "next/font/google";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "../ui/button";
 import { ModeToggle } from "../mode-toggle";
 import { authClient } from "@/lib/auth/auth-client";
-import { redirect } from "next/navigation";
 import ActionButtonSimple from "../action-button-simple";
 import Profile from "../user/profile";
 import { Spinner } from "../ui/spinner";
-import { Menu, X, LogOut, User } from "lucide-react";
+import { X, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
-
-const audiowide = Audiowide({
-  weight: "400",
-  subsets: ["latin"],
-});
+import { useMounted } from "@/hooks/use-mounted";
 
 export default function Navbar() {
   const { data: session, isPending: loading } = authClient.useSession();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, systemTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   const currentTheme = theme === "system" ? systemTheme : theme;
   const logoSrc =
@@ -81,7 +72,13 @@ export default function Navbar() {
         <div className="flex items-center justify-between relative z-50 h-16">
           <div className="flex items-center gap-5">
             <Link href="/">
-              <img src={logoSrc} alt="Remindly" className="h-8 w-auto" />
+              <Image
+                src={logoSrc}
+                alt="Remindly"
+                width={120}
+                height={32}
+                className="h-8 w-auto"
+              />
             </Link>
 
             {/* Desktop Navigation */}
@@ -152,15 +149,19 @@ export default function Navbar() {
                 className="mobile-menu relative"
               >
                 {session.user.image ? (
-                  <img
+                  <Image
                     src={session.user.image}
                     alt="Profile"
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (
-                  <img
+                  <Image
                     src="/profile-picture.png"
                     alt="Profile"
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 )}

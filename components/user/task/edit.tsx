@@ -18,11 +18,26 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateTask } from "@/app/action/task";
-import { authClient } from "@/lib/auth/auth-client";
 import { useAnalyticsUpdates } from "@/hooks/use-analytics-updates";
 
+/**
+ * The subset of a task this form reads.
+ *
+ * Declared structurally rather than reusing `Task` from `@/lib/types`: the
+ * task page parses the API's ISO date strings into `Date` objects before
+ * storing them, so the fields this component needs differ from the raw
+ * network shape.
+ */
 interface EditTaskProps {
-  task: any;
+  task: {
+    id: string;
+    title: string;
+    description?: string;
+    dueDate?: Date | null;
+    reminderDate?: Date | null;
+    categoryId?: string | null;
+    labels?: Array<{ label?: { id: string } | null }>;
+  };
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -43,7 +58,7 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
     task.categoryId || undefined
   );
   const [labelIds, setLabelIds] = useState<string[]>(
-    task.labels ? task.labels.map((taskLabel: any) => taskLabel.label.id) : []
+    task.labels ? task.labels.flatMap((taskLabel) => (taskLabel.label ? [taskLabel.label.id] : [])) : []
   );
   const [isPro, setIsPro] = useState(false);
 

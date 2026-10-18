@@ -59,7 +59,7 @@ export default function CategorySelector({
         const data = await response.json();
         setCategories(data.categories || []);
       }
-    } catch (error) {
+    } catch {
       // Error fetching categories
       toast.error("Failed to load categories");
     } finally {
@@ -99,7 +99,7 @@ export default function CategorySelector({
         const error = await response.json();
         toast.error(error.error || "Failed to create category");
       }
-    } catch (error) {
+    } catch {
       // Error creating category
       toast.error("Failed to create category");
     } finally {

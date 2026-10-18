@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/auth-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  BarChart3,
   TrendingUp,
   TrendingDown,
   Calendar,
@@ -14,9 +13,7 @@ import {
   AlertCircle,
   Target,
   PieChart,
-  Users,
   Activity,
-  Filter,
   Download,
   RefreshCw,
   Plus,
@@ -36,19 +33,19 @@ import { useAnalyticsStore } from "@/stores/analytics-store";
 import { cn } from "@/lib/utils";
 import { AnalyticsCharts } from "@/components/analytics/analytics-charts";
 import { VerifyEmail } from "@/components/verify-email";
+import type { SessionUser } from "@/lib/types";
+
+type TimeRange = "7d" | "30d" | "90d" | "1y";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { analytics, isLoading, error, fetchAnalytics, setIsPro } =
-    useAnalyticsStore();
-  const [user, setUser] = useState<any>(null);
+  const { analytics, fetchAnalytics, setIsPro } = useAnalyticsStore();
+  const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPro, setIsProState] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [, setCurrentPlan] = useState<string | null>(null);
   const [hasAnyPlan, setHasAnyPlan] = useState(false);
-  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "1y">(
-    "30d"
-  );
+  const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -394,7 +391,7 @@ export default function DashboardPage() {
               <>
                 <Select
                   value={timeRange}
-                  onValueChange={(value: any) => setTimeRange(value)}
+                  onValueChange={(value) => setTimeRange(value as TimeRange)}
                 >
                   <SelectTrigger className="w-32">
                     <SelectValue />
@@ -598,7 +595,7 @@ export default function DashboardPage() {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {analytics?.categories?.map((category: any) => {
+                  {analytics?.categories?.map((category) => {
                     const percentage =
                       category.total > 0
                         ? Math.round(
@@ -642,10 +639,10 @@ export default function DashboardPage() {
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {analytics?.labels
-                    ?.sort((a: any, b: any) => b.count - a.count)
+                  {[...(analytics?.labels ?? [])]
+                    .sort((a, b) => b.count - a.count)
                     .slice(0, 8)
-                    .map((label: any) => (
+                    .map((label) => (
                       <div
                         key={label.name}
                         className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"

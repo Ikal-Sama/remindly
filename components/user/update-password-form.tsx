@@ -15,7 +15,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { toast } from "sonner";
 
@@ -46,6 +45,18 @@ export default function UpdatePasswordForm({
 }) {
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Hooks must run unconditionally, so the form is created before the
+  // OAuth-only early return below. `getPasswordFormSchema` already relaxes
+  // `currentPassword` for OAuth users, so this is safe either way.
+  const form = useForm<PasswordFormSchema>({
+    resolver: zodResolver(getPasswordFormSchema(isOAuthOnly)),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
   // Don't allow OAuth users to add passwords for security
   if (isOAuthOnly) {
     return (
@@ -60,15 +71,6 @@ export default function UpdatePasswordForm({
       </div>
     );
   }
-
-  const form = useForm<PasswordFormSchema>({
-    resolver: zodResolver(getPasswordFormSchema(isOAuthOnly)),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
 
   async function onSubmit(values: PasswordFormSchema) {
     setIsUpdating(true);

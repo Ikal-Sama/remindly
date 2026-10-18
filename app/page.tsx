@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 // Note: In client components, metadata should be handled at the page level
 // For full SEO, consider converting to server component or using generateMetadata
 
-export default function page() {
+export default function HomePage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

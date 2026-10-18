@@ -89,10 +89,10 @@ export async function GET() {
     // The database query already filtered tasks correctly, no need for additional filtering
     const tasksToSendToday = tasksNeedingReminders;
 
-    const emailPromises = tasksToSendToday.map(async (task: any) => {
+    const emailPromises = tasksToSendToday.map(async (task) => {
       // Find the active subscription, not just the first one
       const activeSubscription = task.user.subscriptions.find(
-        (sub: any) => sub.status === "active"
+        (sub) => sub.status === "active"
       );
       const isPro = activeSubscription?.plan?.name === "PRO";
 
@@ -113,7 +113,7 @@ export async function GET() {
 
       // Check if notification already sent for this specific type
       const existingNotification = task.notifications.find(
-        (notif: any) => notif.type === notificationType
+        (notif) => notif.type === notificationType
       );
 
       if (existingNotification) {

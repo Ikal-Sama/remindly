@@ -2,14 +2,23 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { authClient } from "@/lib/auth/auth-client";
+import type {
+  Analytics,
+  CategoriesResponse,
+  CurrentSubscriptionResponse,
+  LabelsResponse,
+  SessionUser,
+  Task,
+  TasksResponse,
+} from "@/lib/types";
 
 interface DashboardData {
-  user: any;
+  user: SessionUser | null;
   isPro: boolean;
-  tasks: any[];
-  analytics: any;
-  categories: any[];
-  labels: any[];
+  tasks: Task[];
+  analytics: Analytics | null;
+  categories: CategoriesResponse["categories"];
+  labels: LabelsResponse["labels"];
   loading: {
     tasks: boolean;
     analytics: boolean;
@@ -17,8 +26,8 @@ interface DashboardData {
   };
 }
 
-interface CacheData {
-  data: any;
+interface CacheData<T = unknown> {
+  data: T;
   timestamp: number;
 }
 
@@ -41,11 +50,11 @@ export function useDashboardData() {
 
   // Cache state
   const [cache, setCache] = useState<{
-    subscription: CacheData | null;
-    tasks: CacheData | null;
-    analytics: CacheData | null;
-    categories: CacheData | null;
-    labels: CacheData | null;
+    subscription: CacheData<CurrentSubscriptionResponse> | null;
+    tasks: CacheData<TasksResponse> | null;
+    analytics: CacheData<{ analytics: Analytics }> | null;
+    categories: CacheData<CategoriesResponse> | null;
+    labels: CacheData<LabelsResponse> | null;
   }>({
     subscription: null,
     tasks: null,
@@ -54,19 +63,22 @@ export function useDashboardData() {
     labels: null,
   });
 
-  const isCacheValid = useCallback((cacheData: CacheData | null) => {
-    return cacheData && Date.now() - cacheData.timestamp < CACHE_DURATION;
-  }, []);
+  const isCacheValid = useCallback(
+    (cacheData: { timestamp: number } | null) => {
+      return cacheData !== null && Date.now() - cacheData.timestamp < CACHE_DURATION;
+    },
+    []
+  );
 
   const fetchWithCache = useCallback(
     async <T>(
       key: keyof typeof cache,
       fetcher: () => Promise<T>
     ): Promise<T> => {
-      const cacheData = cache[key];
+      const cacheData = cache[key] as CacheData<T> | null;
 
       if (isCacheValid(cacheData)) {
-        return cacheData!.data as T;
+        return cacheData!.data;
       }
 
       const data = await fetcher();
@@ -87,10 +99,13 @@ export function useDashboardData() {
   const fetchUserData = useCallback(async () => {
     try {
       const session = await authClient.getSession();
-      if (session.data?.user) {
+      // Capture into a local: narrowing on `session.data` does not survive into
+      // the setState callback below.
+      const user = session.data?.user;
+      if (user) {
         setDashboardData((prev) => ({
           ...prev,
-          user: session?.data?.user,
+          user,
         }));
 
         // Fetch subscription status
@@ -101,7 +116,7 @@ export function useDashboardData() {
               method: "GET",
             });
             if (!response.ok) throw new Error("Failed to fetch subscription");
-            return response.json();
+            return (await response.json()) as CurrentSubscriptionResponse;
           }
         );
 
@@ -127,7 +142,7 @@ export function useDashboardData() {
       const tasksData = await fetchWithCache("tasks", async () => {
         const response = await fetch("/api/tasks");
         if (!response.ok) throw new Error("Failed to fetch tasks");
-        return response.json();
+        return (await response.json()) as TasksResponse;
       });
 
       setDashboardData((prev) => ({
@@ -156,7 +171,7 @@ export function useDashboardData() {
       const analyticsData = await fetchWithCache("analytics", async () => {
         const response = await fetch("/api/analytics");
         if (!response.ok) throw new Error("Failed to fetch analytics");
-        return response.json();
+        return (await response.json()) as { analytics: Analytics };
       });
 
       setDashboardData((prev) => ({
@@ -181,12 +196,12 @@ export function useDashboardData() {
         fetchWithCache("categories", async () => {
           const response = await fetch("/api/categories");
           if (!response.ok) throw new Error("Failed to fetch categories");
-          return response.json();
+          return (await response.json()) as CategoriesResponse;
         }),
         fetchWithCache("labels", async () => {
           const response = await fetch("/api/labels");
           if (!response.ok) throw new Error("Failed to fetch labels");
-          return response.json();
+          return (await response.json()) as LabelsResponse;
         }),
       ]);
 

@@ -2,22 +2,14 @@
 
 import { Mail, Facebook, Instagram, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Audiowide } from "next/font/google";
+import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "next-themes";
-import { useState, useEffect } from "react";
-
-const audiowide = Audiowide({
-  weight: "400",
-  subsets: ["latin"],
-});
+import { useMounted } from "@/hooks/use-mounted";
 
 export function Footer() {
   const { theme, systemTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   const currentTheme = theme === "system" ? systemTheme : theme;
   const logoSrc =
@@ -29,7 +21,13 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="space-y-4">
-            <img src={logoSrc} alt="Remindly" className="h-8 w-auto" />
+            <Image
+              src={logoSrc}
+              alt="Remindly"
+              width={120}
+              height={32}
+              className="h-8 w-auto"
+            />
             <p className="text-sm text-muted-foreground max-w-xs">
               Your smart task reminder app that helps you stay organized and
               productive.
@@ -41,12 +39,12 @@ export function Footer() {
             <h3 className="text-lg font-semibold">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a
+                <Link
                   href="/"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Home
-                </a>
+                </Link>
               </li>
               <li>
                 <a

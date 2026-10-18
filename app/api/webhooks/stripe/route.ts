@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import type Stripe from "stripe";
 import prisma from "@/lib/prisma";
-import { webhookProtection } from "@/lib/arcjet/config";
 import { stripe } from "@/lib/stripe";
 
 type SubscriptionWithPeriods = Stripe.Subscription & {
@@ -33,7 +32,7 @@ export async function POST(req: NextRequest) {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -73,7 +72,7 @@ export async function POST(req: NextRequest) {
               });
             }
           }
-        } catch (err) {
+        } catch {
           return NextResponse.json({ error: "Webhook error" }, { status: 500 });
         }
       }

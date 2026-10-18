@@ -13,7 +13,6 @@ import { LoadingSwap } from "./loading-swap";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth/auth-client";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export function VerifyEmail({
@@ -57,7 +56,7 @@ export function VerifyEmail({
         toast.success("Verification email sent successfully!");
         startEmailVerificationCountdown(); // Restart countdown after successful send
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred while resending the verification email");
     } finally {
       setIsResending(false);
@@ -109,7 +108,8 @@ export function VerifyEmail({
             </Button>
 
             <div className="text-sm text-muted-foreground">
-              Didn't receive the email? Check your spam folder or try resending.
+              Didn&apos;t receive the email? Check your spam folder or try
+              resending.
             </div>
 
             <div className="pt-4 border-t">

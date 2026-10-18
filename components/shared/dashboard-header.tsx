@@ -1,7 +1,7 @@
 "use cache";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, TrendingUp, Users, Activity } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Activity } from "lucide-react";
 
 interface DashboardHeaderProps {
   userName?: string;
@@ -19,7 +19,7 @@ export default function DashboardHeader({
           Dashboard
         </h1>
         <p className="text-muted-foreground">
-          Welcome back{userName ? `, ${userName}` : ""}! Here's your task
+          Welcome back{userName ? `, ${userName}` : ""}! Here&apos;s your task
           overview.
         </p>
       </div>

@@ -23,7 +23,7 @@ export default async function DashboardLayout({
             Dashboard
           </h1>
           <p className="text-muted-foreground">
-            Welcome back{userName ? `, ${userName}` : ""}! Here's your task
+            Welcome back{userName ? `, ${userName}` : ""}! Here&apos;s your task
             overview.
           </p>
         </div>
