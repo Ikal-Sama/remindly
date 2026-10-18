@@ -51,6 +51,13 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
+    // Skip Arcjet for cron jobs - Vercel invokes them server-to-server with no
+    // browser characteristics, which bot detection can misclassify. These
+    // routes authenticate with the CRON_SECRET bearer token instead.
+    if (pathname.startsWith("/api/cron")) {
+      return NextResponse.next();
+    }
+
     try {
       const decision = await arcjetInstance.protect(request);
 

@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    cacheComponents: true,
-  },
+  // Top-level since Next.js 16; the `experimental.` prefix is deprecated and
+  // logs a warning on every build.
+  cacheComponents: true,
   images: {
     remotePatterns: [
       {
