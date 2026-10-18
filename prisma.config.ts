@@ -3,8 +3,11 @@
 import { config } from "dotenv";
 import { defineConfig, env } from "prisma/config";
 
-// Load .env.local explicitly
-config({ path: ".env.local" });
+// Load env files explicitly, mirroring the precedence Next.js itself uses:
+// .env.local wins over .env, and earlier paths are never overridden.
+// Passing only ".env.local" broke every Prisma CLI command for anyone whose
+// local env file is named ".env".
+config({ path: [".env.local", ".env"] });
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
