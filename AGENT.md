@@ -269,8 +269,13 @@ Notes that matter:
 
 ## 4. Environment
 
-- **Node 22+.** Package manager: `npm` (a `pnpm-lock.yaml` also exists — prefer
-  `npm` unless the team standardises otherwise; never mix).
+- **Node 22+.** Package manager: **npm, and only npm.** `package-lock.json` is
+  the single lockfile of record. Never add a `pnpm-lock.yaml` or `yarn.lock` —
+  Vercel auto-detects the lockfile to decide which installer to use, and a
+  second lockfile silently resolves different dependency versions in CI than
+  you have locally. This is not theoretical: a stale `pnpm-lock.yaml` pinned
+  `stripe@20.0.0` while npm resolved `20.4.1`, so the build passed locally and
+  failed on Vercel with a type error.
 - Copy `.env.example` → `.env.local`. **Never commit it.**
 - `prisma.config.ts` loads `.env.local` explicitly.
 - Required to run locally: `DATABASE_URL`, `BETTER_AUTH_SECRET`,
