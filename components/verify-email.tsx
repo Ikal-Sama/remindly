@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSwap } from "./loading-swap";
 import { useEffect, useRef, useState } from "react";
@@ -19,6 +18,7 @@ import Link from "next/link";
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 30;
+const emptyDigits = () => Array<string>(OTP_LENGTH).fill("");
 
 export function VerifyEmail({
   email,
@@ -31,13 +31,16 @@ export function VerifyEmail({
   onBack?: () => void;
   onVerified?: () => void;
 }) {
-  const [code, setCode] = useState("");
+  const [digits, setDigits] = useState<string[]>(emptyDigits);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [timeToNextResend, setTimeToNextResend] = useState(
     RESEND_COOLDOWN_SECONDS
   );
   const interval = useRef<NodeJS.Timeout>(undefined);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const code = digits.join("");
 
   // Declared before the effects that use it: the react-hooks rules require
   // every value referenced by an effect to be initialised before it.
@@ -72,15 +75,101 @@ export function VerifyEmail({
     };
   }, []);
 
-  const handleVerify = async () => {
-    const otp = code.trim();
+  const focusBox = (index: number) => {
+    inputRefs.current[index]?.focus();
+  };
 
+  /** Spread `text` across the boxes starting at `start`, truncating overflow. */
+  const distribute = (text: string, start: number) => {
+    const next = [...digits];
+    let lastFilled = start;
+
+    for (let i = 0; i < text.length && start + i < OTP_LENGTH; i++) {
+      next[start + i] = text[i];
+      lastFilled = start + i;
+    }
+
+    setDigits(next);
+    focusBox(Math.min(lastFilled + 1, OTP_LENGTH - 1));
+  };
+
+  const handleChange = (index: number, raw: string) => {
+    const numeric = raw.replace(/\D/g, "");
+
+    if (!numeric) {
+      const next = [...digits];
+      next[index] = "";
+      setDigits(next);
+      return;
+    }
+
+    // More than one digit means the whole code arrived at once - iOS SMS
+    // autofill drops the entire code into a single box, and a paste that
+    // slipped past onPaste behaves the same way. Always fill from the first
+    // box: autofill can target any box, and spreading from the middle would
+    // leave the leading boxes empty and the code incomplete.
+    if (numeric.length > 1) {
+      distribute(numeric, 0);
+      return;
+    }
+
+    const next = [...digits];
+    next[index] = numeric;
+    setDigits(next);
+
+    if (index < OTP_LENGTH - 1) {
+      focusBox(index + 1);
+    }
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const pasted = event.clipboardData.getData("text").replace(/\D/g, "");
+    if (!pasted) return;
+    // Pasting means "use this code", so it replaces from the first box rather
+    // than appending at the caret - otherwise a paste over partially typed
+    // digits silently submits the wrong code.
+    distribute(pasted, 0);
+  };
+
+  const handleKeyDown = (
+    index: number,
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Backspace") {
+      if (digits[index]) {
+        const next = [...digits];
+        next[index] = "";
+        setDigits(next);
+      } else if (index > 0) {
+        // Empty box: clear and step back rather than doing nothing.
+        const next = [...digits];
+        next[index - 1] = "";
+        setDigits(next);
+        focusBox(index - 1);
+      }
+      return;
+    }
+
+    if (event.key === "ArrowLeft" && index > 0) {
+      event.preventDefault();
+      focusBox(index - 1);
+      return;
+    }
+
+    if (event.key === "ArrowRight" && index < OTP_LENGTH - 1) {
+      event.preventDefault();
+      focusBox(index + 1);
+    }
+  };
+
+  const handleVerify = async () => {
     if (!email) {
       toast.error("Email address is required");
       return;
     }
 
-    if (otp.length !== OTP_LENGTH) {
+    if (code.length !== OTP_LENGTH) {
       toast.error(`Enter the ${OTP_LENGTH}-digit code from your email`);
       return;
     }
@@ -88,11 +177,12 @@ export function VerifyEmail({
     setIsVerifying(true);
 
     try {
-      const res = await authClient.emailOtp.verifyEmail({ email, otp });
+      const res = await authClient.emailOtp.verifyEmail({ email, otp: code });
 
       if (res.error) {
         toast.error(res.error.message || "That code is not valid");
-        setCode("");
+        setDigits(emptyDigits());
+        focusBox(0);
         return;
       }
 
@@ -136,7 +226,7 @@ export function VerifyEmail({
     }
   };
 
-  const canVerify = code.trim().length === OTP_LENGTH && !isVerifying;
+  const canVerify = code.length === OTP_LENGTH && !isVerifying;
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -156,52 +246,37 @@ export function VerifyEmail({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="verification-code" className="sr-only">
+              <Label htmlFor="verification-code-0" className="sr-only">
                 Verification code
               </Label>
-              <Input
-                id="verification-code"
-                value={code}
-                onChange={(event) =>
-                  setCode(
-                    // Digits only, capped at the expected length.
-                    event.target.value.replace(/\D/g, "").slice(0, OTP_LENGTH)
-                  )
-                }
-                onPaste={(event) => {
-                  // Replace the whole field rather than letting the browser
-                  // append at the caret. Without this, pasting a code while
-                  // anything is already typed produces a silently wrong
-                  // number - e.g. "123" then pasting "456789" yields "123456".
-                  const pasted = event.clipboardData
-                    .getData("text")
-                    .replace(/\D/g, "");
-                  if (!pasted) return;
-                  event.preventDefault();
-                  setCode(pasted.slice(0, OTP_LENGTH));
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && canVerify) {
-                    void handleVerify();
-                  }
-                }}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={OTP_LENGTH}
-                placeholder="000000"
-                disabled={isVerifying}
-                // `pl` matches the tracking so the spaced digits stay optically
-                // centred - letter-spacing also adds space after the final
-                // character, which would otherwise shift them left.
-                className="text-center text-2xl tracking-[0.5em] pl-[0.5em] font-mono"
-              />
+
+              <div className="flex justify-center gap-2" role="group">
+                {digits.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(element) => {
+                      inputRefs.current[index] = element;
+                    }}
+                    id={`verification-code-${index}`}
+                    value={digit}
+                    onChange={(event) => handleChange(index, event.target.value)}
+                    onPaste={handlePaste}
+                    onKeyDown={(event) => handleKeyDown(index, event)}
+                    type="text"
+                    inputMode="numeric"
+                    // Only the first box carries the autofill hint; iOS uses it
+                    // to offer the code from Messages above the keyboard.
+                    autoComplete={index === 0 ? "one-time-code" : "off"}
+                    maxLength={1}
+                    aria-label={`Digit ${index + 1} of ${OTP_LENGTH}`}
+                    disabled={isVerifying}
+                    className="h-12 w-12 rounded-md border border-input bg-background text-center text-xl font-mono shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
+                  />
+                ))}
+              </div>
             </div>
 
-            <Button
-              className="w-full"
-              onClick={handleVerify}
-              disabled={!canVerify}
-            >
+            <Button className="w-full" onClick={handleVerify} disabled={!canVerify}>
               {isVerifying ? "Verifying…" : "Verify email"}
             </Button>
 
@@ -233,7 +308,10 @@ export function VerifyEmail({
                   Back to sign in
                 </button>
               ) : (
-                <Link href="/login" className="text-sm text-blue-600 hover:underline">
+                <Link
+                  href="/login"
+                  className="text-sm text-blue-600 hover:underline"
+                >
                   Back to sign in
                 </Link>
               )}
