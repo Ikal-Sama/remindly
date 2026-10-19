@@ -4,54 +4,86 @@ import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth/auth-client";
+import { useEffect } from "react";
 
+/**
+ * Plan comparison with the appropriate call to action.
+ *
+ * Rendered both on the marketing landing page and on /choose-plan, so it has
+ * to cope with three states:
+ *
+ *   signed out      FREE -> "Get Started" -> /signup
+ *   signed in FREE  FREE -> "Your current plan" (disabled)
+ *   signed in PRO   PRO  -> "Your current plan" (disabled)
+ *
+ * Every account is provisioned a FREE plan on signup, so FREE is never
+ * something to select.
+ */
 export default function SubscriptionsPlan() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isPro, setIsPro] = useState(false);
 
-  const handlePlanSelect = async (planType: "FREE" | "PRO") => {
+  const { data: session, isPending } = authClient.useSession();
+  const isSignedIn = Boolean(session?.user);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const response = await fetch("/api/subscription/create");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled) {
+          setIsPro(data.currentSubscription?.plan?.name === "PRO");
+        }
+      } catch {
+        // Leave isPro false; the upgrade path still works.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn]);
+
+  const startFree = () => {
+    router.push(isSignedIn ? "/dashboard" : "/signup");
+  };
+
+  const startPro = async () => {
+    if (!isSignedIn) {
+      router.push("/signup");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      if (planType === "FREE") {
-        const response = await fetch("/api/subscription/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ planName: planType }),
-        });
+      const response = await fetch("/api/subscription/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ planName: "PRO" }),
+      });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to subscribe");
-        }
-
-        await response.json();
-        toast.success(`Successfully subscribed to ${planType} plan!`);
-        router.push("/dashboard");
-      } else {
-        const response = await fetch("/api/subscription/checkout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ planName: planType }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to start payment session");
-        }
-
-        const data = await response.json();
-
-        if (!data.url) {
-          throw new Error("Missing checkout URL from server");
-        }
-
-        window.location.href = data.url as string;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to start payment session");
       }
+
+      const data = await response.json();
+
+      if (!data.url) {
+        throw new Error("Missing checkout URL from server");
+      }
+
+      window.location.href = data.url;
     } catch (error) {
       console.error("Subscription error:", error);
       toast.error(
@@ -59,17 +91,19 @@ export default function SubscriptionsPlan() {
           ? error.message
           : "Failed to subscribe. Please try again."
       );
-    } finally {
       setIsLoading(false);
     }
   };
+
+  const isFreeCurrent = isSignedIn && !isPro;
+
   return (
     <div className="max-w-6xl mx-auto">
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
         Choose Your Plan
       </h2>
       <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-        Select the perfect plan for your task management needs
+        Every account starts on FREE. Upgrade when you need more.
       </p>
 
       <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -101,10 +135,16 @@ export default function SubscriptionsPlan() {
           <Button
             className="w-full"
             variant="secondary"
-            onClick={() => handlePlanSelect("FREE")}
-            disabled={isLoading}
+            onClick={startFree}
+            disabled={isFreeCurrent}
           >
-            Get Started
+            {isPending
+              ? "Loading…"
+              : isFreeCurrent
+              ? "Your current plan"
+              : isSignedIn
+              ? "Included with your account"
+              : "Get Started"}
           </Button>
         </div>
 
@@ -138,10 +178,10 @@ export default function SubscriptionsPlan() {
 
           <Button
             className="w-full"
-            onClick={() => handlePlanSelect("PRO")}
-            disabled={isLoading}
+            onClick={startPro}
+            disabled={isLoading || isPro}
           >
-            Upgrade to Pro
+            {isPro ? "Your current plan" : "Upgrade to Pro"}
           </Button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import type Stripe from "stripe";
 import prisma from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { ensureFreeSubscription } from "@/lib/subscriptions";
 
 type SubscriptionWithPeriods = Stripe.Subscription & {
   current_period_start: number;
@@ -194,6 +195,18 @@ export async function POST(req: NextRequest) {
           cancelledAt: new Date(),
         },
       });
+
+      // Fall the user back to FREE. Without this they would be left with no
+      // active plan at all, and `createTaskAction` rejects task creation with
+      // NO_SUBSCRIPTION - locking them out of the app entirely.
+      const cancelled = await prisma.userSubscription.findFirst({
+        where: { stripeSubscriptionId: subscription.id },
+        select: { userId: true },
+      });
+
+      if (cancelled) {
+        await ensureFreeSubscription(cancelled.userId);
+      }
     }
 
     return NextResponse.json({ received: true });
