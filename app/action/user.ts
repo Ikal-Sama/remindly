@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth/auth";
 import { emailVerification } from "@/lib/emails/emailVerification";
 import { ProfileFormSchema } from "@/components/user/update-profile-form";
 import prisma from "@/lib/prisma";
+import { stripe } from "@/lib/stripe";
 
 export const getUserWithOAuth = async () => {
   try {
@@ -212,5 +213,66 @@ export const updateUserProfile = async (values: ProfileFormSchema) => {
   } catch (error) {
     console.error("updateUserProfile error:", error);
     return { success: false, error: "Failed to update profile" };
+  }
+};
+
+/**
+ * Permanently delete the signed-in user's account.
+ *
+ * The session is re-derived from the request headers here and the user id is
+ * never taken from the client, so this cannot be used to delete someone else's
+ * account.
+ *
+ * Stripe subscriptions are cancelled first: deleting the local rows alone would
+ * leave a paying customer being billed for a plan they no longer have. A
+ * failure there is logged but does not block deletion - the user asked for the
+ * account to go, and a stale Stripe subscription can be reconciled later,
+ * whereas trapping them in a half-deleted state cannot.
+ *
+ * Deleting the User cascades to sessions, accounts, tasks, task labels,
+ * categories, labels and subscriptions, and tasks cascade to email
+ * notifications.
+ */
+export const deleteAccount = async () => {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const userId = session.user.id;
+
+    const paidSubscriptions = await prisma.userSubscription.findMany({
+      where: {
+        userId,
+        stripeSubscriptionId: { not: null },
+      },
+      select: { stripeSubscriptionId: true },
+    });
+
+    for (const { stripeSubscriptionId } of paidSubscriptions) {
+      if (!stripeSubscriptionId) continue;
+      try {
+        await stripe.subscriptions.cancel(stripeSubscriptionId);
+      } catch (error) {
+        console.error(
+          `deleteAccount: failed to cancel Stripe subscription ${stripeSubscriptionId}:`,
+          error,
+        );
+      }
+    }
+
+    await prisma.user.delete({ where: { id: userId } });
+
+    return { success: true };
+  } catch (error) {
+    console.error("deleteAccount error:", error);
+    return {
+      success: false,
+      error: "Failed to delete your account. Please try again.",
+    };
   }
 };

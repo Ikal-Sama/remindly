@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth/auth-client";
 import SubscriptionHistory from "@/components/user/subscription-history";
+import { DeleteAccountSection } from "@/components/user/delete-account-section";
 import { useUserStore } from "@/stores/user-store";
 import type { UserWithOAuth } from "@/lib/types";
 
@@ -84,8 +85,8 @@ export default function SettingsPage() {
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-20">
             <TabsList className="flex flex-row lg:flex-col h-fit w-full lg:w-64 items-start">
               <TabsTrigger value="profile" className="w-full justify-start">
-                <span className="hidden lg:inline">Profile</span>
-                <span className="lg:hidden">Profile</span>
+                <span className="hidden lg:inline">Account</span>
+                <span className="lg:hidden">Account</span>
               </TabsTrigger>
               <TabsTrigger value="password" className="w-full justify-start">
                 <span className="hidden lg:inline">Password</span>
@@ -116,6 +117,10 @@ export default function SettingsPage() {
 
                   <div className="mt-5 w-full max-w-md">
                     {userData && <UpdateProfileForm user={userData} />}
+                  </div>
+
+                  <div className="mt-8 w-full max-w-md">
+                    <DeleteAccountSection />
                   </div>
                 </div>
               </TabsContent>
