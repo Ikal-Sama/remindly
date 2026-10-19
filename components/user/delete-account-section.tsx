@@ -95,12 +95,20 @@ export function DeleteAccountSection() {
               <AlertDialogTitle>Delete your account?</AlertDialogTitle>
               <AlertDialogDescription className="space-y-3">
                 <span className="block">
-                  This is a <strong>permanent</strong> action. Your account and
-                  all of its data - tasks, categories, labels and subscription
-                  history - will be deleted immediately.
+                  Your account will close and your access to Remindly will end
+                  straight away.
                 </span>
-                <span className="block font-semibold">
-                  This cannot be undone. Your account cannot be recovered.
+                <span className="block">
+                  From our database we permanently delete your account and all
+                  of its data &mdash; your tasks, categories, labels and
+                  subscription history. This cannot be undone and we cannot
+                  restore it for you.
+                </span>
+                <span className="block text-xs">
+                  If you have an active paid subscription it is cancelled at
+                  the same time. Note that our payment processor may still
+                  retain a minimal transaction record where tax or accounting
+                  law requires it, even though your account is gone.
                 </span>
               </AlertDialogDescription>
             </AlertDialogHeader>
