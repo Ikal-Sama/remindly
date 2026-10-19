@@ -12,6 +12,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { LoadingSwap } from "./loading-swap";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth/auth-client";
 import Link from "next/link";
@@ -39,6 +40,7 @@ export function VerifyEmail({
   );
   const interval = useRef<NodeJS.Timeout>(undefined);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const router = useRouter();
 
   const code = digits.join("");
 
@@ -187,7 +189,15 @@ export function VerifyEmail({
       }
 
       toast.success("Email verified!");
-      onVerified?.();
+
+      // Verification is not a page load, unlike the old link flow, so nothing
+      // would re-read the session on its own. Refresh so server components
+      // pick up emailVerified, or let the caller decide where to go.
+      if (onVerified) {
+        onVerified();
+      } else {
+        router.refresh();
+      }
     } catch {
       toast.error("Something went wrong verifying your email");
     } finally {

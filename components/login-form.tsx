@@ -100,7 +100,11 @@ export function LoginForm({
 
   if (showVerification) {
     return (
-      <VerifyEmail email={email} onBack={() => setShowVerification(false)} />
+      <VerifyEmail
+        email={email}
+        onBack={() => setShowVerification(false)}
+        onVerified={() => router.push("/dashboard")}
+      />
     );
   }
 

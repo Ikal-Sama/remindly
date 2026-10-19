@@ -87,7 +87,7 @@ export function RegisterForm({
   }
 
   if (showVerification) {
-    return <VerifyEmail email={email} />;
+    return <VerifyEmail email={email} onVerified={() => router.push("/dashboard")} />;
   }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
