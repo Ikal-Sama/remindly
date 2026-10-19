@@ -2,7 +2,6 @@
 
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
-import { emailVerification } from "@/lib/emails/emailVerification";
 import { ProfileFormSchema } from "@/components/user/update-profile-form";
 import prisma from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
@@ -192,14 +191,15 @@ export const updateUserProfile = async (values: ProfileFormSchema) => {
       });
       emailChanged = true;
 
-      // Send verification email for the new email
-      const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email`;
-      await emailVerification({
-        user: {
-          email: values.email,
-          name: values.name,
-        },
-        url: verificationUrl,
+      // Send a verification code for the new address.
+      //
+      // Previously this emailed a link to `/verify-email`, a route that does
+      // not exist, so the link was always dead. Verification is now code-based,
+      // and this goes through Better Auth's OTP endpoint so the same email
+      // template and rate limits apply.
+      await auth.api.sendVerificationOTP({
+        body: { email: values.email, type: "change-email" },
+        headers: await headers(),
       });
     }
 

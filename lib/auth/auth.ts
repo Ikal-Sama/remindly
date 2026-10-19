@@ -1,11 +1,16 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { emailOTP } from "better-auth/plugins";
 import { stripe } from "@better-auth/stripe";
 import prisma from "../prisma";
 import { emailVerification } from "@/lib/emails/emailVerification";
+import { sendEmailOtp } from "../emails/emailOtp";
 import { sendResetPasswordEmail } from "../emails/send-reset-password-email";
 import { stripe as stripeClient } from "../stripe";
 import { ensureFreeSubscription } from "../subscriptions";
+
+/** How long a one-time code stays valid. Kept in step with the email copy. */
+const OTP_TTL_MINUTES = 10;
 
 export const auth = betterAuth({
   user: {
@@ -37,6 +42,44 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  // Six-digit code instead of a verification link.
+  //
+  // `overrideDefaultEmailVerification` reroutes Better Auth's own
+  // email-verification flow through OTP, which also covers email changes.
+  // Password reset is deliberately left link-based - that flow already works,
+  // and a reset link is the conventional pattern for it.
+  //
+  // `storeOTP: "hashed"` means a leaked database cannot be replayed into
+  // verified accounts.
+  plugins: [
+    emailOTP({
+      sendVerificationOTP: async ({ email, otp, type }) => {
+        try {
+          await sendEmailOtp({
+            email,
+            otp,
+            type,
+            expiresInMinutes: OTP_TTL_MINUTES,
+          });
+        } catch (error) {
+          // Never surface a delivery failure as a 500 from the auth endpoints.
+          console.error("Failed to send OTP email:", error);
+        }
+      },
+      sendVerificationOnSignUp: true,
+      overrideDefaultEmailVerification: true,
+      otpLength: 6,
+      expiresIn: OTP_TTL_MINUTES * 60,
+      storeOTP: "hashed",
+      allowedAttempts: 5,
+      rateLimit: { window: 60, max: 5 },
+    }),
+    stripe({
+      stripeClient,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      createCustomerOnSignUp: true,
+    }),
+  ],
   databaseHooks: {
     user: {
       create: {
@@ -53,11 +96,5 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [
-    stripe({
-      stripeClient,
-      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-      createCustomerOnSignUp: true,
-    }),
-  ],
 });
+
