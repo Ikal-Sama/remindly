@@ -43,8 +43,6 @@ export default function DashboardPage() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPro, setIsProState] = useState(false);
-  const [, setCurrentPlan] = useState<string | null>(null);
-  const [hasAnyPlan, setHasAnyPlan] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -89,21 +87,14 @@ export default function DashboardPage() {
           const data = await response.json();
           const currentPlanName: string | undefined =
             data?.currentSubscription?.plan?.name;
-          setCurrentPlan(currentPlanName || null);
-          setHasAnyPlan(!!currentPlanName);
           setIsProState(currentPlanName === "PRO");
           setIsPro(currentPlanName === "PRO");
         } else {
-          // No subscription found
-          setCurrentPlan(null);
-          setHasAnyPlan(false);
           setIsProState(false);
           setIsPro(false);
         }
       } catch (error) {
         console.error("Error fetching subscription:", error);
-        setCurrentPlan(null);
-        setHasAnyPlan(false);
         setIsProState(false);
         setIsPro(false);
       }
@@ -113,11 +104,8 @@ export default function DashboardPage() {
   }, [user, setIsPro]);
 
   useEffect(() => {
-    // Only fetch analytics after subscription status is determined
-    if (hasAnyPlan !== undefined && hasAnyPlan !== null) {
-      fetchAnalytics();
-    }
-  }, [fetchAnalytics, hasAnyPlan]);
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -150,15 +138,9 @@ export default function DashboardPage() {
                 Basic task overview and insights
               </p>
             </div>
-            {hasAnyPlan ? (
-              <Button onClick={() => router.push("/choose-plan")}>
-                Upgrade to PRO for detailed analytics
-              </Button>
-            ) : (
-              <Button onClick={() => router.push("/choose-plan")}>
-                Select a PLAN
-              </Button>
-            )}
+            <Button onClick={() => router.push("/choose-plan")}>
+              Upgrade to PRO for detailed analytics
+            </Button>
           </div>
 
           {/* Basic Metrics for FREE users */}
@@ -387,41 +369,37 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {hasAnyPlan && (
-              <>
-                <Select
-                  value={timeRange}
-                  onValueChange={(value) => setTimeRange(value as TimeRange)}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Last 7 days</SelectItem>
-                    <SelectItem value="30d">Last 30 days</SelectItem>
-                    <SelectItem value="90d">Last 90 days</SelectItem>
-                    <SelectItem value="1y">Last year</SelectItem>
-                  </SelectContent>
-                </Select>
+            <Select
+              value={timeRange}
+              onValueChange={(value) => setTimeRange(value as TimeRange)}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 90 days</SelectItem>
+                <SelectItem value="1y">Last year</SelectItem>
+              </SelectContent>
+            </Select>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                >
-                  <RefreshCw
-                    className={cn("w-4 h-4 mr-2", refreshing && "animate-spin")}
-                  />
-                  Refresh
-                </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCw
+                className={cn("w-4 h-4 mr-2", refreshing && "animate-spin")}
+              />
+              Refresh
+            </Button>
 
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
-              </>
-            )}
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
           </div>
         </div>
 
