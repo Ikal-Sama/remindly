@@ -168,6 +168,18 @@ export function VerifyEmail({
                     event.target.value.replace(/\D/g, "").slice(0, OTP_LENGTH)
                   )
                 }
+                onPaste={(event) => {
+                  // Replace the whole field rather than letting the browser
+                  // append at the caret. Without this, pasting a code while
+                  // anything is already typed produces a silently wrong
+                  // number - e.g. "123" then pasting "456789" yields "123456".
+                  const pasted = event.clipboardData
+                    .getData("text")
+                    .replace(/\D/g, "");
+                  if (!pasted) return;
+                  event.preventDefault();
+                  setCode(pasted.slice(0, OTP_LENGTH));
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && canVerify) {
                     void handleVerify();
@@ -178,7 +190,10 @@ export function VerifyEmail({
                 maxLength={OTP_LENGTH}
                 placeholder="000000"
                 disabled={isVerifying}
-                className="text-center text-2xl tracking-[0.5em] font-mono"
+                // `pl` matches the tracking so the spaced digits stay optically
+                // centred - letter-spacing also adds space after the final
+                // character, which would otherwise shift them left.
+                className="text-center text-2xl tracking-[0.5em] pl-[0.5em] font-mono"
               />
             </div>
 
