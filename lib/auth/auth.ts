@@ -3,7 +3,6 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { emailOTP } from "better-auth/plugins";
 import { stripe } from "@better-auth/stripe";
 import prisma from "../prisma";
-import { emailVerification } from "@/lib/emails/emailVerification";
 import { sendEmailOtp } from "../emails/emailOtp";
 import { sendResetPasswordEmail } from "../emails/send-reset-password-email";
 import { stripe as stripeClient } from "../stripe";
@@ -28,9 +27,12 @@ export const auth = betterAuth({
   emailVerification: {
     autoSignInAfterVerification: true,
     sendOnSignUp: true,
-    sendVerificationEmail: async ({ user, url }) => {
-      await emailVerification({ user, url });
-    },
+    // Deliberately NO `sendVerificationEmail` here.
+    //
+    // The emailOTP plugin injects its own `sendVerificationEmail` via its
+    // `init()` hook when `overrideDefaultEmailVerification` is true. Defining
+    // our own here takes precedence over that injected implementation, which
+    // silently sent the old link-based email instead of the OTP.
   },
   socialProviders: {
     google: {
