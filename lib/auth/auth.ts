@@ -5,6 +5,7 @@ import prisma from "../prisma";
 import { emailVerification } from "@/lib/emails/emailVerification";
 import { sendResetPasswordEmail } from "../emails/send-reset-password-email";
 import { stripe as stripeClient } from "../stripe";
+import { ensureFreeSubscription } from "../subscriptions";
 
 export const auth = betterAuth({
   user: {
@@ -36,6 +37,22 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        // Every new account starts on the FREE plan, so nobody has to pick a
+        // plan before they can use the app. Deliberately failure-tolerant: an
+        // unseeded database must not be able to block signups.
+        after: async (user) => {
+          try {
+            await ensureFreeSubscription(user.id);
+          } catch (error) {
+            console.error("Failed to provision FREE plan on signup:", error);
+          }
+        },
+      },
+    },
+  },
   plugins: [
     stripe({
       stripeClient,
