@@ -2,6 +2,7 @@ import { Calendar } from "./calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { startOfTomorrow } from "@/lib/utils";
 
 export function DatePickerField({
   value,
@@ -23,6 +24,8 @@ export function DatePickerField({
           mode="single"
           selected={value}
           onSelect={onChange}
+          initialFocus
+          disabled={{ before: startOfTomorrow() }}
         />
       </PopoverContent>
     </Popover>

@@ -27,9 +27,9 @@ export default function SubscriptionPage() {
           return;
         }
 
-        const data = await response.json();
+        const data: { currentSubscription?: { plan?: { name: string } } } = await response.json();
         const currentPlan: string | undefined =
-          data?.currentSubscription?.plan?.name;
+          data.currentSubscription?.plan?.name;
 
         if (currentPlan === "FREE" || currentPlan === "PRO") {
           setPlanName(currentPlan);
@@ -69,13 +69,12 @@ export default function SubscriptionPage() {
         throw new Error(data.error || "Failed to start payment session");
       }
 
-      const data = await response.json();
-
-      if (!data.url) {
+      const data2 = await response.json();
+      if (!data2.url) {
         throw new Error("Missing checkout URL from server");
       }
 
-      window.location.href = data.url as string;
+      window.location.href = data2.url as string;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Upgrade failed";
       setError(message);
