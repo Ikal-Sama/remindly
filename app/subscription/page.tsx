@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSubscription } from "@/hooks/use-subscription";
 import { Button } from "@/components/ui/button";
 
 type PlanName = "FREE" | "PRO" | null;
 
 export default function SubscriptionPage() {
   const router = useRouter();
+  const { isPro, refetch } = useSubscription();
   const [planName, setPlanName] = useState<PlanName>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +45,11 @@ export default function SubscriptionPage() {
 
     fetchSubscription();
   }, []);
+
+  // Re-fetch if the plan might have changed
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const handleUpgradeClick = async () => {
     try {
@@ -102,7 +109,6 @@ export default function SubscriptionPage() {
   };
 
   const isFree = planName === "FREE";
-  const isPro = planName === "PRO";
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
@@ -121,8 +127,6 @@ export default function SubscriptionPage() {
                 <p className="text-sm text-muted-foreground">
                   Loading your subscription...
                 </p>
-              ) : error ? (
-                <p className="text-sm text-red-500">{error}</p>
               ) : planName ? (
                 <div className="flex items-center gap-3">
                   <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
@@ -131,11 +135,6 @@ export default function SubscriptionPage() {
                   {isPro && (
                     <span className="text-xs text-emerald-500">
                       Enjoy all Pro features
-                    </span>
-                  )}
-                  {isFree && (
-                    <span className="text-xs text-muted-foreground">
-                      You are using the Free plan
                     </span>
                   )}
                 </div>
@@ -147,22 +146,16 @@ export default function SubscriptionPage() {
 
               <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-                  {isFree && "Max 10 task creation"}
                   {isPro && "Unlimited task creation"}
-                  {!planName && "Task creation limit depends on your plan"}
+                  {!("isPro" in typeof window ? true : false) && "Max 10 task creation"}
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
                   Smart task reminders
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
                   Email notifications
-                  {isFree && <span className="ml-1 text-xs">(limited)</span>}
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
                   Priority access to new features (Pro only)
                 </li>
               </ul>
@@ -174,17 +167,11 @@ export default function SubscriptionPage() {
                   Current status
                 </p>
                 <p className="text-2xl font-semibold tracking-tight">
-                  {isLoading
-                    ? "—"
-                    : planName
-                    ? planName === "PRO"
-                      ? "Pro Member"
-                      : "Free Member"
-                    : "No Plan"}
+                  {isLoading ? "—" : planName === "PRO" ? "Pro Member" : "Free Member"}
                 </p>
               </div>
 
-              {isFree && !isLoading && !error && (
+              {isFree && !isLoading && (
                 <Button
                   size="lg"
                   className="w-full md:w-auto shadow-md"
@@ -194,11 +181,10 @@ export default function SubscriptionPage() {
                 </Button>
               )}
 
-              {isPro && !isLoading && !error && (
+              {isPro && !isLoading && (
                 <div className="flex flex-col items-end gap-3 w-full md:w-auto">
                   <p className="text-xs text-muted-foreground max-w-xs text-right">
-                    You are on the <span className="font-semibold">Pro</span>{" "}
-                    plan. Thank you for supporting GoTask.
+                    You are on the <span className="font-semibold">Pro</span>{" "}plan. Thank you for supporting GoTask.
                   </p>
                   <Button
                     variant="destructive"

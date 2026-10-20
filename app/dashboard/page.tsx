@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/auth-client";
+import { useSubscription } from "@/hooks/use-subscription";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   TrendingUp,
@@ -39,69 +40,23 @@ type TimeRange = "7d" | "30d" | "90d" | "1y";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { analytics, fetchAnalytics, setIsPro } = useAnalyticsStore();
+  const { analytics, fetchAnalytics, setIsPro: setAnalyticsIsPro } = useAnalyticsStore();
+  const { isPro: hookIsPro, refetch } = useSubscription();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPro, setIsProState] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [refreshing, setRefreshing] = useState(false);
 
+  // Initial fetch on mount — uses the shared hook
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const session = await authClient.getSession();
-        if (!session.data?.user) {
-          router.push("/login");
-          return;
-        }
+    refetch();
+  }, [refetch]);
 
-        // Check if email is verified
-        if (!session.data.user.emailVerified) {
-          setUser(session.data.user);
-          setLoading(false);
-          return;
-        }
-
-        setUser(session.data.user);
-      } catch (error) {
-        console.error("Auth error:", error);
-        router.push("/login");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
-
+  // Keep the analytics store in sync with the hook's isPro value
   useEffect(() => {
-    const fetchSubscription = async () => {
-      if (!user) return;
-
-      try {
-        const response = await fetch("/api/subscription/create", {
-          method: "GET",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const currentPlanName: string | undefined =
-            data?.currentSubscription?.plan?.name;
-          setIsProState(currentPlanName === "PRO");
-          setIsPro(currentPlanName === "PRO");
-        } else {
-          setIsProState(false);
-          setIsPro(false);
-        }
-      } catch (error) {
-        console.error("Error fetching subscription:", error);
-        setIsProState(false);
-        setIsPro(false);
-      }
-    };
-
-    fetchSubscription();
-  }, [user, setIsPro]);
+    setAnalyticsIsPro(hookIsPro);
+  }, [hookIsPro, setAnalyticsIsPro]);
 
   useEffect(() => {
     fetchAnalytics();

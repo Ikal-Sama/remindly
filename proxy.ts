@@ -3,6 +3,7 @@ import { arcjetInstance } from "@/lib/arcjet/config";
 
 const PROTECTED_ROUTES = [
   "/dashboard",
+  "/task",
   "/choose-plan",
   "/settings",
   "/subscription",

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth/auth-client";
 import { useEffect } from "react";
+import { useSubscription } from "@/hooks/use-subscription";
 
 /**
  * Plan comparison with the appropriate call to action.
@@ -22,34 +23,12 @@ import { useEffect } from "react";
  */
 export default function SubscriptionsPlan() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPro, setIsPro] = useState(false);
+  const { isPro, refetch } = useSubscription();
 
   const { data: session, isPending } = authClient.useSession();
   const isSignedIn = Boolean(session?.user);
 
-  useEffect(() => {
-    if (!isSignedIn) return;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const response = await fetch("/api/subscription/create");
-        if (!response.ok) return;
-        const data = await response.json();
-        if (!cancelled) {
-          setIsPro(data.currentSubscription?.plan?.name === "PRO");
-        }
-      } catch {
-        // Leave isPro false; the upgrade path still works.
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isSignedIn]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const startFree = () => {
     router.push(isSignedIn ? "/dashboard" : "/signup");
@@ -91,6 +70,7 @@ export default function SubscriptionsPlan() {
           ? error.message
           : "Failed to subscribe. Please try again."
       );
+    } finally {
       setIsLoading(false);
     }
   };

@@ -11,8 +11,9 @@ the rule wins.
 
 These are not preferences. Violating them means the work is not acceptable.
 
-### 1.1 Never commit to `main`
-`main` is protected. **Create a branch before you touch a single line of code.**
+### 1.1 Never commit to `main` — unless proven working
+`main` is protected. **Create a branch before you touch a single line of code.**  
+No commit or push to `main` is permitted unless the change has been verified as working for at least one complete user flow.
 
 ```bash
 git status                      # must be clean-ish; note uncommitted work first
@@ -37,6 +38,7 @@ Rules:
 - Never commit secrets, `.env`, or `.env.local` (they are gitignored — verify).
 - Before opening a PR: `git rebase` onto the latest base, re-run lint + build.
 - Leave the working tree cleaner than you found it. Delete your scratch files.
+- **Before merging to `main`: verify the change end-to-end for one realistic user scenario** (e.g. sign up → verify → create task → check cron, depending on the area touched).
 
 ```bash
 # Verify before you finish
@@ -306,6 +308,7 @@ Plus:
 - [ ] Reused existing components instead of adding new ones.
 - [ ] No duplicated logic or class strings.
 - [ ] No secrets committed.
+- [ ] **Change has been verified end-to-end for at least one complete user flow** (sign up, verify email, create task, check cron, etc. depending on area).
 
 ---
 
@@ -361,7 +364,7 @@ unless asked.
 3. Search components/ hooks/ stores/ lib/ for something that already solves it.
 4. State a short plan.
 5. Implement the smallest correct change, following §3.
-6. Verify:  npx tsc --noEmit && npm run lint && npm run build
+6. Verify: npx tsc --noEmit && npm run lint && npm run build. **Additionally, manually test the specific user flow the change touches (e.g. sign up → verify → create task → check cron). Document the verification method in the PR summary.**
 7. Summarise: what changed, why, files touched, how it was verified,
    anything deliberately left out.
 8. If the work is non-trivial, record it in

@@ -17,3 +17,26 @@ export function startOfTomorrow(): Date {
   date.setHours(24, 0, 0, 0)
   return date
 }
+
+/**
+ * Convert a Date to UTC midnight (start of day in UTC).
+ *
+ * Guarantees the returned Date has no time-zone shift when the server
+ * interprets it — all `getUTC*` methods return 0 for hour/minute/second/ms.
+ *
+ * Used so task `dueDate` / `reminderDate` comparisons are consistent
+ * regardless of the user's local time zone.
+ */
+export function toUtcMidnight(date: Date): Date {
+  return new Date(
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      0,
+      0,
+      0,
+      0
+    )
+  )
+}

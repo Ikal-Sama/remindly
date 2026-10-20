@@ -31,8 +31,10 @@ import { authClient } from "@/lib/auth/auth-client";
 import { createTaskFormSchema } from "@/lib/validation/task";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
-import { cn, startOfTomorrow } from "@/lib/utils";
+import { cn, startOfTomorrow, toUtcMidnight } from "@/lib/utils";
+import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useAnalyticsUpdates } from "@/hooks/use-analytics-updates";
+import { useSubscription } from "@/hooks/use-subscription";
 
 type CreateTaskProps = {
   onSuccess?: () => void;
@@ -43,31 +45,7 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
   const user = session.data?.user;
   const { onTaskCreated } = useAnalyticsUpdates();
 
-  const [isPro, setIsPro] = useState(false);
-
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      try {
-        const response = await fetch("/api/subscription/create", {
-          method: "GET",
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-        const currentPlan: string | undefined =
-          data?.currentSubscription?.plan?.name;
-
-        setIsPro(currentPlan === "PRO");
-      } catch (error) {
-        console.error("Error fetching subscription in CreateTask:", error);
-      }
-    };
-
-    fetchSubscription();
-  }, []);
+  const { isPro } = useSubscription();
 
   const form = useForm<z.infer<typeof createTaskFormSchema>>({
     resolver: zodResolver(createTaskFormSchema),
@@ -92,30 +70,8 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
     // Convert dates to UTC midnight to avoid timezone issues
     const normalizedValues = {
       ...values,
-      dueDate: new Date(
-        Date.UTC(
-          values.dueDate.getFullYear(),
-          values.dueDate.getMonth(),
-          values.dueDate.getDate(),
-          0,
-          0,
-          0,
-          0
-        )
-      ),
-      reminderDate: values.reminderDate
-        ? new Date(
-            Date.UTC(
-              values.reminderDate.getFullYear(),
-              values.reminderDate.getMonth(),
-              values.reminderDate.getDate(),
-              0,
-              0,
-              0,
-              0
-            )
-          )
-        : undefined,
+      dueDate: toUtcMidnight(values.dueDate),
+      reminderDate: values.reminderDate ? toUtcMidnight(values.reminderDate) : undefined,
     };
 
     const result = await createTaskAction(normalizedValues, user.id);
@@ -188,29 +144,10 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
             <FormItem>
               <FormLabel>Due date</FormLabel>
               <FormControl>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {field.value ? format(field.value, "PPP") : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      initialFocus
-                      disabled={{ before: startOfTomorrow() }}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePickerField
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -225,30 +162,10 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
               <FormItem>
                 <FormLabel>Reminder date</FormLabel>
                 <FormControl>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value
-                          ? format(field.value, "PPP")
-                          : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <DatePickerField
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

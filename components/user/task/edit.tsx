@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,21 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import CategorySelector from "@/components/ui/category-selector";
 import LabelSelector from "@/components/ui/label-selector";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, toUtcMidnight } from "@/lib/utils";
+import { DatePickerField } from "@/components/ui/date-picker-field";
+import { useAnalyticsUpdates } from "@/hooks/use-analytics-updates";
 import { toast } from "sonner";
 import { updateTask } from "@/app/action/task";
-import { useAnalyticsUpdates } from "@/hooks/use-analytics-updates";
+import { useSubscription } from "@/hooks/use-subscription";
 
 /**
  * The subset of a task this form reads.
- *
  * Declared structurally rather than reusing `Task` from `@/lib/types`: the
  * task page parses the API's ISO date strings into `Date` objects before
  * storing them, so the fields this component needs differ from the raw
@@ -60,31 +57,7 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
   const [labelIds, setLabelIds] = useState<string[]>(
     task.labels ? task.labels.flatMap((taskLabel) => (taskLabel.label ? [taskLabel.label.id] : [])) : []
   );
-  const [isPro, setIsPro] = useState(false);
-
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      try {
-        const response = await fetch("/api/subscription/create", {
-          method: "GET",
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = await response.json();
-        const currentPlan: string | undefined =
-          data?.currentSubscription?.plan?.name;
-
-        setIsPro(currentPlan === "PRO");
-      } catch (error) {
-        console.error("Error fetching subscription in EditTask:", error);
-      }
-    };
-
-    fetchSubscription();
-  }, []);
+  const { isPro } = useSubscription();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,33 +86,9 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
     setIsLoading(true);
     try {
       // Convert dates to UTC midnight to avoid timezone issues
-      const normalizedDueDate = dueDate
-        ? new Date(
-            Date.UTC(
-              dueDate.getFullYear(),
-              dueDate.getMonth(),
-              dueDate.getDate(),
-              0,
-              0,
-              0,
-              0
-            )
-          )
-        : undefined;
+      const normalizedDueDate = dueDate ? toUtcMidnight(dueDate) : undefined;
 
-      const normalizedReminderDate = reminderDate
-        ? new Date(
-            Date.UTC(
-              reminderDate.getFullYear(),
-              reminderDate.getMonth(),
-              reminderDate.getDate(),
-              0,
-              0,
-              0,
-              0
-            )
-          )
-        : undefined;
+      const normalizedReminderDate = reminderDate ? toUtcMidnight(reminderDate) : undefined;
 
       const result = await updateTask(task.id, {
         title,
@@ -199,8 +148,7 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
                 className={cn(
                   "w-full justify-start text-left font-normal",
                   !dueDate && "text-muted-foreground"
-                )}
-              >
+                )}>
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {dueDate ? format(dueDate, "PPP") : "Pick a date"}
               </Button>
@@ -227,8 +175,7 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
                     className={cn(
                       "w-full justify-start text-left font-normal",
                       !reminderDate && "text-muted-foreground"
-                    )}
-                  >
+                    )}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {reminderDate ? format(reminderDate, "PPP") : "Pick a date"}
                   </Button>
