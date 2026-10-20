@@ -40,12 +40,18 @@ type TimeRange = "7d" | "30d" | "90d" | "1y";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
   const { analytics, fetchAnalytics, setIsPro: setAnalyticsIsPro } = useAnalyticsStore();
   const { isPro } = useSubscription();
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const user = (session?.user ?? null) as SessionUser | null;
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (!sessionLoading && !session) {
+      router.push("/login");
+    }
+  }, [session, sessionLoading, router]);
 
   // Keep the analytics store in sync with the subscription hook's isPro value
   useEffect(() => {
@@ -62,7 +68,7 @@ export default function DashboardPage() {
     setRefreshing(false);
   };
 
-  if (loading) {
+  if (sessionLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <Spinner />
