@@ -70,6 +70,7 @@ export default function SubscriptionPage() {
       }
 
       const data2 = await response.json();
+
       if (!data2.url) {
         throw new Error("Missing checkout URL from server");
       }
@@ -146,7 +147,7 @@ export default function SubscriptionPage() {
               <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
                   {isPro && "Unlimited task creation"}
-                  {!("isPro" in typeof window ? true : false) && "Max 10 task creation"}
+                  {!isPro && "Max 10 task creation"}
                 </li>
                 <li className="flex items-center gap-2">
                   Smart task reminders

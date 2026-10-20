@@ -9,7 +9,7 @@ export function DatePickerField({
   onChange,
 }: {
   value: Date | undefined;
-  onChange: (date: Date) => void;
+  onChange: (date: Date | undefined) => void;
 }) {
   return (
     <Popover>
