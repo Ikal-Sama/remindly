@@ -41,22 +41,16 @@ type TimeRange = "7d" | "30d" | "90d" | "1y";
 export default function DashboardPage() {
   const router = useRouter();
   const { analytics, fetchAnalytics, setIsPro: setAnalyticsIsPro } = useAnalyticsStore();
-  const { isPro: hookIsPro, refetch } = useSubscription();
+  const { isPro } = useSubscription();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isPro, setIsProState] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [refreshing, setRefreshing] = useState(false);
 
-  // Initial fetch on mount — uses the shared hook
+  // Keep the analytics store in sync with the subscription hook's isPro value
   useEffect(() => {
-    refetch();
-  }, [refetch]);
-
-  // Keep the analytics store in sync with the hook's isPro value
-  useEffect(() => {
-    setAnalyticsIsPro(hookIsPro);
-  }, [hookIsPro, setAnalyticsIsPro]);
+    setAnalyticsIsPro(isPro);
+  }, [isPro, setAnalyticsIsPro]);
 
   useEffect(() => {
     fetchAnalytics();

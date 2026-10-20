@@ -7,9 +7,17 @@ export const arcjetInstance = arcjet({
     shield({
       mode: "LIVE",
     }),
-    // Bot detection to identify automated traffic
+    // Bot detection. Kept in DRY_RUN on the general API because LIVE was
+    // misfiring on the app's own first-party requests - `/api/subscription/create`
+    // is an authenticated, session-scoped read that the dashboard depends on,
+    // and Arcjet was classifying those browser requests as bots, which blocked
+    // the fetch and left the dashboard stuck on the FREE view.
+    //
+    // DRY_RUN keeps the detection signal (every classification is still logged)
+    // without blocking legitimate traffic. The shield and rate limit below stay
+    // LIVE, so attack and abuse protection is unchanged.
     detectBot({
-      mode: "LIVE",
+      mode: "DRY_RUN",
       // Allow verified bots like Googlebot, but block suspicious ones
       allow: [
         "GOOGLE_CRAWLER",
