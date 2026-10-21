@@ -11,14 +11,21 @@ the rule wins.
 
 These are not preferences. Violating them means the work is not acceptable.
 
-### 1.1 Never commit to `main` — unless proven working
-`main` is protected. **Create a branch before you touch a single line of code.**  
-No commit or push to `main` is permitted unless the change has been verified as working for at least one complete user flow.
+### 1.1 Branch first — never commit to `main`
+`main` is protected. **Create a branch before you touch a single line of code.**
+
+Every change goes on a branch — features, bug fixes, refactors, docs, config,
+tooling, rule updates. There is no "too small" exception and no "just this one
+commit" exception. Do not stage, commit, or push to `main`.
 
 ```bash
 git status                      # must be clean-ish; note uncommitted work first
 git checkout -b feat/task-reminder-email
 ```
+
+When the work is done: push the branch and open a pull request. Merge to `main`
+only after the gates pass (see §4) **and** the change is verified end-to-end for
+one realistic user scenario.
 
 Branch naming — pick the one that matches the work:
 
@@ -33,8 +40,9 @@ Branch naming — pick the one that matches the work:
 | `hotfix/`   | urgent production fix (still never on `main`)     |
 
 Rules:
+- **Never stage, commit, or push to `main`.** Every change starts on a branch and lands via a pull request. No exceptions.
 - One concern per branch. Do not mix a refactor with a feature.
-- Never `git push` to `main`, never force-push a shared branch.
+- Never force-push a shared branch.
 - Never commit secrets, `.env`, or `.env.local` (they are gitignored — verify).
 - Before opening a PR: `git rebase` onto the latest base, re-run lint + build.
 - Leave the working tree cleaner than you found it. Delete your scratch files.
@@ -359,7 +367,7 @@ unless asked.
 ## 6. Agent workflow (summary)
 
 ```
-1. git checkout -b <type>/<slug>          # never main
+1. git checkout -b <type>/<slug>          # ALWAYS a branch, never main
 2. Read this file. Read the code you're changing. Grep for callers.
 3. Search components/ hooks/ stores/ lib/ for something that already solves it.
 4. State a short plan.
@@ -371,7 +379,8 @@ unless asked.
    docs/changes/<yyyy-mm-dd>-<slug>.md and reference that path in the summary.
 9. Commit on the branch with a conventional message:
       feat(scope): short imperative summary
-   Never push to main.
+   Then push the branch and open a pull request. Never stage, commit, or push
+   to main.
 ```
 
 Commit message format:
