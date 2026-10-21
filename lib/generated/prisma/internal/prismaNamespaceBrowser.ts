@@ -178,6 +178,9 @@ export const TaskScalarFieldEnum = {
   reminderDate: 'reminderDate',
   categoryId: 'categoryId',
   isCompleted: 'isCompleted',
+  recurrenceFrequency: 'recurrenceFrequency',
+  recurrenceInterval: 'recurrenceInterval',
+  recurrenceEndDate: 'recurrenceEndDate',
   userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

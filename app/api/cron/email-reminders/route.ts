@@ -3,6 +3,11 @@ import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/emails/sendEmail";
 import { taskReminderEmail } from "@/lib/emails/taskReminderEmail";
 import { headers } from "next/headers";
+import {
+  formatRecurrence,
+  getNextOccurrence,
+  isRecurrenceFrequency,
+} from "@/lib/recurrence";
 
 export async function GET() {
   try {
@@ -111,13 +116,21 @@ export async function GET() {
         return; // Skip if conditions aren't met
       }
 
-      // Check if notification already sent for this specific type
-      const existingNotification = task.notifications.find(
-        (notif) => notif.type === notificationType
+      // Skip if this occurrence was already reminded today. The check is
+      // scoped to the day so a recurring task can fire again on its next
+      // occurrence without growing an unbounded notification log.
+      const endOfTodayUTC = new Date(
+        todayUTC.getTime() + 24 * 60 * 60 * 1000
+      );
+      const alreadySentToday = task.notifications.some(
+        (notif) =>
+          notif.type === notificationType &&
+          notif.scheduledFor >= todayUTC &&
+          notif.scheduledFor < endOfTodayUTC
       );
 
-      if (existingNotification) {
-        return; // Already sent
+      if (alreadySentToday) {
+        return; // Already sent for this occurrence
       }
 
       try {
@@ -132,6 +145,10 @@ export async function GET() {
             dueDate: task.dueDate,
             reminderDate: task.reminderDate || undefined,
             isPro,
+            recurrenceLabel: formatRecurrence(
+              task.recurrenceFrequency,
+              task.recurrenceInterval
+            ),
           }),
         });
 
@@ -143,6 +160,36 @@ export async function GET() {
             scheduledFor,
           },
         });
+
+        // Recurring task: advance to the next occurrence so the next reminder
+        // fires on schedule. Clears the rule once the end date is reached.
+        if (isRecurrenceFrequency(task.recurrenceFrequency)) {
+          const nextDue = getNextOccurrence(
+            task.recurrenceFrequency,
+            task.recurrenceInterval,
+            task.dueDate
+          );
+          const reachedEnd =
+            task.recurrenceEndDate && nextDue > task.recurrenceEndDate;
+
+          if (reachedEnd) {
+            await prisma.task.update({
+              where: { id: task.id },
+              data: { recurrenceFrequency: null, recurrenceEndDate: null },
+            });
+          } else {
+            const delta = nextDue.getTime() - task.dueDate.getTime();
+            await prisma.task.update({
+              where: { id: task.id },
+              data: {
+                dueDate: nextDue,
+                reminderDate: task.reminderDate
+                  ? new Date(task.reminderDate.getTime() + delta)
+                  : null,
+              },
+            });
+          }
+        }
 
         console.log(
           `Email reminder sent for task: ${task.title} to ${task.user.email}`

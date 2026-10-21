@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import CategorySelector from "@/components/ui/category-selector";
 import LabelSelector from "@/components/ui/label-selector";
@@ -17,6 +24,7 @@ import { useAnalyticsUpdates } from "@/hooks/use-analytics-updates";
 import { toast } from "sonner";
 import { updateTask } from "@/app/action/task";
 import { useSubscription } from "@/hooks/use-subscription";
+import { RECURRENCE_OPTIONS } from "@/lib/recurrence";
 
 /**
  * The subset of a task this form reads.
@@ -34,6 +42,9 @@ interface EditTaskProps {
     reminderDate?: Date | null;
     categoryId?: string | null;
     labels?: Array<{ label?: { id: string } | null }>;
+    recurrenceFrequency?: string | null;
+    recurrenceInterval?: number;
+    recurrenceEndDate?: Date | null;
   };
   onSuccess: () => void;
   onCancel: () => void;
@@ -57,6 +68,15 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
   const [labelIds, setLabelIds] = useState<string[]>(
     task.labels ? task.labels.flatMap((taskLabel) => (taskLabel.label ? [taskLabel.label.id] : [])) : []
   );
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<string | null>(
+    task.recurrenceFrequency ?? null
+  );
+  const [recurrenceInterval, setRecurrenceInterval] = useState<number>(
+    task.recurrenceInterval ?? 1
+  );
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<
+    Date | undefined
+  >(task.recurrenceEndDate ? new Date(task.recurrenceEndDate) : undefined);
   const { isPro } = useSubscription();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,6 +110,10 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
 
       const normalizedReminderDate = reminderDate ? toUtcMidnight(reminderDate) : undefined;
 
+      const normalizedRecurrenceEndDate = recurrenceEndDate
+        ? toUtcMidnight(recurrenceEndDate)
+        : undefined;
+
       const result = await updateTask(task.id, {
         title,
         description,
@@ -97,6 +121,11 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
         reminderDate: normalizedReminderDate,
         categoryId,
         labelIds,
+        recurrenceFrequency,
+        recurrenceInterval: recurrenceFrequency ? recurrenceInterval : undefined,
+        recurrenceEndDate: recurrenceFrequency
+          ? normalizedRecurrenceEndDate
+          : undefined,
       });
 
       if (result.success) {
@@ -207,6 +236,59 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
               />
             </div>
           </>
+        )}
+
+        <div className="space-y-2">
+          <Label>Repeat</Label>
+          <Select
+            value={recurrenceFrequency ?? ""}
+            onValueChange={(value) =>
+              setRecurrenceFrequency(
+                value === ""
+                  ? null
+                  : (value as "DAILY" | "WEEKLY" | "MONTHLY")
+              )
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Does not repeat" />
+            </SelectTrigger>
+            <SelectContent>
+              {RECURRENCE_OPTIONS.filter((option) => option.value !== "").map(
+                (option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                )
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {recurrenceFrequency && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Every</Label>
+              <Input
+                type="number"
+                min={1}
+                max={52}
+                value={recurrenceInterval}
+                onChange={(e) =>
+                  setRecurrenceInterval(
+                    e.target.value === "" ? 1 : Number(e.target.value)
+                  )
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>End on (optional)</Label>
+              <DatePickerField
+                value={recurrenceEndDate}
+                onChange={setRecurrenceEndDate}
+              />
+            </div>
+          </div>
         )}
       </div>
 

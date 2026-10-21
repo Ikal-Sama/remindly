@@ -57,6 +57,12 @@ export interface Task {
   categoryId: string | null;
   category: Category | null;
   isCompleted: boolean;
+  /** Recurrence rule. `null` means a one-off task. */
+  recurrenceFrequency: "DAILY" | "WEEKLY" | "MONTHLY" | null;
+  /** Gap between occurrences. Always 1 for one-off tasks. */
+  recurrenceInterval: number;
+  /** Stop recurring after this date; `null` means it repeats indefinitely. */
+  recurrenceEndDate: string | null;
   userId: string;
   createdAt: string;
   updatedAt: string;

@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import CategorySelector from "@/components/ui/category-selector";
 import LabelSelector from "@/components/ui/label-selector";
@@ -29,6 +36,7 @@ import { createTaskAction } from "@/app/action/task";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth/auth-client";
 import { createTaskFormSchema } from "@/lib/validation/task";
+import { RECURRENCE_OPTIONS } from "@/lib/recurrence";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { cn, startOfTomorrow, toUtcMidnight } from "@/lib/utils";
@@ -56,10 +64,14 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
       reminderDate: undefined,
       categoryId: undefined,
       labelIds: [],
+      recurrenceFrequency: null,
+      recurrenceInterval: 1,
+      recurrenceEndDate: undefined,
     },
   });
 
   const { isSubmitting } = form.formState;
+  const recurrenceFrequency = form.watch("recurrenceFrequency");
 
   async function onSubmit(values: z.infer<typeof createTaskFormSchema>) {
     if (!user?.id) {
@@ -153,6 +165,81 @@ const CreateTask: React.FC<CreateTaskProps> = ({ onSuccess }) => {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="recurrenceFrequency"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Repeat</FormLabel>
+              <Select
+                value={field.value ?? ""}
+                onValueChange={(value) =>
+                  field.onChange(value === "" ? null : value)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Does not repeat" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECURRENCE_OPTIONS.filter(
+                    (option) => option.value !== ""
+                  ).map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {recurrenceFrequency && (
+          <>
+            <FormField
+              control={form.control}
+              name="recurrenceInterval"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Every</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={52}
+                      value={field.value ?? 1}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === "" ? 1 : Number(e.target.value)
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="recurrenceEndDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End on (optional)</FormLabel>
+                  <FormControl>
+                    <DatePickerField
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
 
         {isPro && (
           <FormField

@@ -20,8 +20,18 @@ export type TaskModel = runtime.Types.Result.DefaultSelection<Prisma.$TaskPayloa
 
 export type AggregateTask = {
   _count: TaskCountAggregateOutputType | null
+  _avg: TaskAvgAggregateOutputType | null
+  _sum: TaskSumAggregateOutputType | null
   _min: TaskMinAggregateOutputType | null
   _max: TaskMaxAggregateOutputType | null
+}
+
+export type TaskAvgAggregateOutputType = {
+  recurrenceInterval: number | null
+}
+
+export type TaskSumAggregateOutputType = {
+  recurrenceInterval: number | null
 }
 
 export type TaskMinAggregateOutputType = {
@@ -32,6 +42,9 @@ export type TaskMinAggregateOutputType = {
   reminderDate: Date | null
   categoryId: string | null
   isCompleted: boolean | null
+  recurrenceFrequency: string | null
+  recurrenceInterval: number | null
+  recurrenceEndDate: Date | null
   userId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -45,6 +58,9 @@ export type TaskMaxAggregateOutputType = {
   reminderDate: Date | null
   categoryId: string | null
   isCompleted: boolean | null
+  recurrenceFrequency: string | null
+  recurrenceInterval: number | null
+  recurrenceEndDate: Date | null
   userId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -58,12 +74,23 @@ export type TaskCountAggregateOutputType = {
   reminderDate: number
   categoryId: number
   isCompleted: number
+  recurrenceFrequency: number
+  recurrenceInterval: number
+  recurrenceEndDate: number
   userId: number
   createdAt: number
   updatedAt: number
   _all: number
 }
 
+
+export type TaskAvgAggregateInputType = {
+  recurrenceInterval?: true
+}
+
+export type TaskSumAggregateInputType = {
+  recurrenceInterval?: true
+}
 
 export type TaskMinAggregateInputType = {
   id?: true
@@ -73,6 +100,9 @@ export type TaskMinAggregateInputType = {
   reminderDate?: true
   categoryId?: true
   isCompleted?: true
+  recurrenceFrequency?: true
+  recurrenceInterval?: true
+  recurrenceEndDate?: true
   userId?: true
   createdAt?: true
   updatedAt?: true
@@ -86,6 +116,9 @@ export type TaskMaxAggregateInputType = {
   reminderDate?: true
   categoryId?: true
   isCompleted?: true
+  recurrenceFrequency?: true
+  recurrenceInterval?: true
+  recurrenceEndDate?: true
   userId?: true
   createdAt?: true
   updatedAt?: true
@@ -99,6 +132,9 @@ export type TaskCountAggregateInputType = {
   reminderDate?: true
   categoryId?: true
   isCompleted?: true
+  recurrenceFrequency?: true
+  recurrenceInterval?: true
+  recurrenceEndDate?: true
   userId?: true
   createdAt?: true
   updatedAt?: true
@@ -143,6 +179,18 @@ export type TaskAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: TaskAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: TaskSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: TaskMinAggregateInputType
@@ -173,6 +221,8 @@ export type TaskGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   _count?: TaskCountAggregateInputType | true
+  _avg?: TaskAvgAggregateInputType
+  _sum?: TaskSumAggregateInputType
   _min?: TaskMinAggregateInputType
   _max?: TaskMaxAggregateInputType
 }
@@ -185,10 +235,15 @@ export type TaskGroupByOutputType = {
   reminderDate: Date | null
   categoryId: string | null
   isCompleted: boolean
+  recurrenceFrequency: string | null
+  recurrenceInterval: number
+  recurrenceEndDate: Date | null
   userId: string
   createdAt: Date
   updatedAt: Date
   _count: TaskCountAggregateOutputType | null
+  _avg: TaskAvgAggregateOutputType | null
+  _sum: TaskSumAggregateOutputType | null
   _min: TaskMinAggregateOutputType | null
   _max: TaskMaxAggregateOutputType | null
 }
@@ -219,6 +274,9 @@ export type TaskWhereInput = {
   reminderDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   categoryId?: Prisma.StringNullableFilter<"Task"> | string | null
   isCompleted?: Prisma.BoolFilter<"Task"> | boolean
+  recurrenceFrequency?: Prisma.StringNullableFilter<"Task"> | string | null
+  recurrenceInterval?: Prisma.IntFilter<"Task"> | number
+  recurrenceEndDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   userId?: Prisma.StringFilter<"Task"> | string
   createdAt?: Prisma.DateTimeFilter<"Task"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Task"> | Date | string
@@ -236,6 +294,9 @@ export type TaskOrderByWithRelationInput = {
   reminderDate?: Prisma.SortOrderInput | Prisma.SortOrder
   categoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   isCompleted?: Prisma.SortOrder
+  recurrenceFrequency?: Prisma.SortOrderInput | Prisma.SortOrder
+  recurrenceInterval?: Prisma.SortOrder
+  recurrenceEndDate?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -256,6 +317,9 @@ export type TaskWhereUniqueInput = Prisma.AtLeast<{
   reminderDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   categoryId?: Prisma.StringNullableFilter<"Task"> | string | null
   isCompleted?: Prisma.BoolFilter<"Task"> | boolean
+  recurrenceFrequency?: Prisma.StringNullableFilter<"Task"> | string | null
+  recurrenceInterval?: Prisma.IntFilter<"Task"> | number
+  recurrenceEndDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   userId?: Prisma.StringFilter<"Task"> | string
   createdAt?: Prisma.DateTimeFilter<"Task"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Task"> | Date | string
@@ -273,12 +337,17 @@ export type TaskOrderByWithAggregationInput = {
   reminderDate?: Prisma.SortOrderInput | Prisma.SortOrder
   categoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   isCompleted?: Prisma.SortOrder
+  recurrenceFrequency?: Prisma.SortOrderInput | Prisma.SortOrder
+  recurrenceInterval?: Prisma.SortOrder
+  recurrenceEndDate?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.TaskCountOrderByAggregateInput
+  _avg?: Prisma.TaskAvgOrderByAggregateInput
   _max?: Prisma.TaskMaxOrderByAggregateInput
   _min?: Prisma.TaskMinOrderByAggregateInput
+  _sum?: Prisma.TaskSumOrderByAggregateInput
 }
 
 export type TaskScalarWhereWithAggregatesInput = {
@@ -292,6 +361,9 @@ export type TaskScalarWhereWithAggregatesInput = {
   reminderDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Task"> | Date | string | null
   categoryId?: Prisma.StringNullableWithAggregatesFilter<"Task"> | string | null
   isCompleted?: Prisma.BoolWithAggregatesFilter<"Task"> | boolean
+  recurrenceFrequency?: Prisma.StringNullableWithAggregatesFilter<"Task"> | string | null
+  recurrenceInterval?: Prisma.IntWithAggregatesFilter<"Task"> | number
+  recurrenceEndDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Task"> | Date | string | null
   userId?: Prisma.StringWithAggregatesFilter<"Task"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Task"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Task"> | Date | string
@@ -304,6 +376,9 @@ export type TaskCreateInput = {
   dueDate: Date | string
   reminderDate?: Date | string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutTasksInput
@@ -320,6 +395,9 @@ export type TaskUncheckedCreateInput = {
   reminderDate?: Date | string | null
   categoryId?: string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -334,6 +412,9 @@ export type TaskUpdateInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutTasksNestedInput
@@ -350,6 +431,9 @@ export type TaskUncheckedUpdateInput = {
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -365,6 +449,9 @@ export type TaskCreateManyInput = {
   reminderDate?: Date | string | null
   categoryId?: string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -377,6 +464,9 @@ export type TaskUpdateManyMutationInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -389,6 +479,9 @@ export type TaskUncheckedUpdateManyInput = {
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -412,9 +505,16 @@ export type TaskCountOrderByAggregateInput = {
   reminderDate?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
   isCompleted?: Prisma.SortOrder
+  recurrenceFrequency?: Prisma.SortOrder
+  recurrenceInterval?: Prisma.SortOrder
+  recurrenceEndDate?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type TaskAvgOrderByAggregateInput = {
+  recurrenceInterval?: Prisma.SortOrder
 }
 
 export type TaskMaxOrderByAggregateInput = {
@@ -425,6 +525,9 @@ export type TaskMaxOrderByAggregateInput = {
   reminderDate?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
   isCompleted?: Prisma.SortOrder
+  recurrenceFrequency?: Prisma.SortOrder
+  recurrenceInterval?: Prisma.SortOrder
+  recurrenceEndDate?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -438,9 +541,16 @@ export type TaskMinOrderByAggregateInput = {
   reminderDate?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
   isCompleted?: Prisma.SortOrder
+  recurrenceFrequency?: Prisma.SortOrder
+  recurrenceInterval?: Prisma.SortOrder
+  recurrenceEndDate?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type TaskSumOrderByAggregateInput = {
+  recurrenceInterval?: Prisma.SortOrder
 }
 
 export type TaskScalarRelationFilter = {
@@ -567,6 +677,9 @@ export type TaskCreateWithoutUserInput = {
   dueDate: Date | string
   reminderDate?: Date | string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   category?: Prisma.CategoryCreateNestedOneWithoutTasksInput
@@ -582,6 +695,9 @@ export type TaskUncheckedCreateWithoutUserInput = {
   reminderDate?: Date | string | null
   categoryId?: string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   notifications?: Prisma.EmailNotificationUncheckedCreateNestedManyWithoutTaskInput
@@ -625,6 +741,9 @@ export type TaskScalarWhereInput = {
   reminderDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   categoryId?: Prisma.StringNullableFilter<"Task"> | string | null
   isCompleted?: Prisma.BoolFilter<"Task"> | boolean
+  recurrenceFrequency?: Prisma.StringNullableFilter<"Task"> | string | null
+  recurrenceInterval?: Prisma.IntFilter<"Task"> | number
+  recurrenceEndDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   userId?: Prisma.StringFilter<"Task"> | string
   createdAt?: Prisma.DateTimeFilter<"Task"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Task"> | Date | string
@@ -637,6 +756,9 @@ export type TaskCreateWithoutNotificationsInput = {
   dueDate: Date | string
   reminderDate?: Date | string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutTasksInput
@@ -652,6 +774,9 @@ export type TaskUncheckedCreateWithoutNotificationsInput = {
   reminderDate?: Date | string | null
   categoryId?: string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -681,6 +806,9 @@ export type TaskUpdateWithoutNotificationsInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutTasksNestedInput
@@ -696,6 +824,9 @@ export type TaskUncheckedUpdateWithoutNotificationsInput = {
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -709,6 +840,9 @@ export type TaskCreateWithoutCategoryInput = {
   dueDate: Date | string
   reminderDate?: Date | string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutTasksInput
@@ -723,6 +857,9 @@ export type TaskUncheckedCreateWithoutCategoryInput = {
   dueDate: Date | string
   reminderDate?: Date | string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -763,6 +900,9 @@ export type TaskCreateWithoutTaskLabelsInput = {
   dueDate: Date | string
   reminderDate?: Date | string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutTasksInput
@@ -778,6 +918,9 @@ export type TaskUncheckedCreateWithoutTaskLabelsInput = {
   reminderDate?: Date | string | null
   categoryId?: string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -807,6 +950,9 @@ export type TaskUpdateWithoutTaskLabelsInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutTasksNestedInput
@@ -822,6 +968,9 @@ export type TaskUncheckedUpdateWithoutTaskLabelsInput = {
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -836,6 +985,9 @@ export type TaskCreateManyUserInput = {
   reminderDate?: Date | string | null
   categoryId?: string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -847,6 +999,9 @@ export type TaskUpdateWithoutUserInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   category?: Prisma.CategoryUpdateOneWithoutTasksNestedInput
@@ -862,6 +1017,9 @@ export type TaskUncheckedUpdateWithoutUserInput = {
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   notifications?: Prisma.EmailNotificationUncheckedUpdateManyWithoutTaskNestedInput
@@ -876,6 +1034,9 @@ export type TaskUncheckedUpdateManyWithoutUserInput = {
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -887,6 +1048,9 @@ export type TaskCreateManyCategoryInput = {
   dueDate: Date | string
   reminderDate?: Date | string | null
   isCompleted?: boolean
+  recurrenceFrequency?: string | null
+  recurrenceInterval?: number
+  recurrenceEndDate?: Date | string | null
   userId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -899,6 +1063,9 @@ export type TaskUpdateWithoutCategoryInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutTasksNestedInput
@@ -913,6 +1080,9 @@ export type TaskUncheckedUpdateWithoutCategoryInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -927,6 +1097,9 @@ export type TaskUncheckedUpdateManyWithoutCategoryInput = {
   dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reminderDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recurrenceFrequency?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  recurrenceInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  recurrenceEndDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -980,6 +1153,9 @@ export type TaskSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   reminderDate?: boolean
   categoryId?: boolean
   isCompleted?: boolean
+  recurrenceFrequency?: boolean
+  recurrenceInterval?: boolean
+  recurrenceEndDate?: boolean
   userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -998,6 +1174,9 @@ export type TaskSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   reminderDate?: boolean
   categoryId?: boolean
   isCompleted?: boolean
+  recurrenceFrequency?: boolean
+  recurrenceInterval?: boolean
+  recurrenceEndDate?: boolean
   userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1013,6 +1192,9 @@ export type TaskSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   reminderDate?: boolean
   categoryId?: boolean
   isCompleted?: boolean
+  recurrenceFrequency?: boolean
+  recurrenceInterval?: boolean
+  recurrenceEndDate?: boolean
   userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1028,12 +1210,15 @@ export type TaskSelectScalar = {
   reminderDate?: boolean
   categoryId?: boolean
   isCompleted?: boolean
+  recurrenceFrequency?: boolean
+  recurrenceInterval?: boolean
+  recurrenceEndDate?: boolean
   userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "dueDate" | "reminderDate" | "categoryId" | "isCompleted" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["task"]>
+export type TaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "dueDate" | "reminderDate" | "categoryId" | "isCompleted" | "recurrenceFrequency" | "recurrenceInterval" | "recurrenceEndDate" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["task"]>
 export type TaskInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   category?: boolean | Prisma.Task$categoryArgs<ExtArgs>
@@ -1066,6 +1251,9 @@ export type $TaskPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     reminderDate: Date | null
     categoryId: string | null
     isCompleted: boolean
+    recurrenceFrequency: string | null
+    recurrenceInterval: number
+    recurrenceEndDate: Date | null
     userId: string
     createdAt: Date
     updatedAt: Date
@@ -1503,6 +1691,9 @@ export interface TaskFieldRefs {
   readonly reminderDate: Prisma.FieldRef<"Task", 'DateTime'>
   readonly categoryId: Prisma.FieldRef<"Task", 'String'>
   readonly isCompleted: Prisma.FieldRef<"Task", 'Boolean'>
+  readonly recurrenceFrequency: Prisma.FieldRef<"Task", 'String'>
+  readonly recurrenceInterval: Prisma.FieldRef<"Task", 'Int'>
+  readonly recurrenceEndDate: Prisma.FieldRef<"Task", 'DateTime'>
   readonly userId: Prisma.FieldRef<"Task", 'String'>
   readonly createdAt: Prisma.FieldRef<"Task", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Task", 'DateTime'>

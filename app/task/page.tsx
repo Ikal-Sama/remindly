@@ -36,7 +36,9 @@ import {
   X,
   Tag,
   Hash,
+  RefreshCw,
 } from "lucide-react";
+import { formatRecurrence } from "@/lib/recurrence";
 import {
   getLoggedInUserAllTasks,
   completeTask,
@@ -56,6 +58,9 @@ interface Task {
   reminderDate?: Date | null;
   isCompleted: boolean;
   createdAt: Date;
+  recurrenceFrequency: string | null;
+  recurrenceInterval: number;
+  recurrenceEndDate: Date | null;
   category?: {
     id: string;
     name: string;
@@ -159,6 +164,9 @@ export default function TaskListPage() {
               dueDate: task.dueDate ? new Date(task.dueDate) : null,
               reminderDate: task.reminderDate
                 ? new Date(task.reminderDate)
+                : null,
+              recurrenceEndDate: task.recurrenceEndDate
+                ? new Date(task.recurrenceEndDate)
                 : null,
               createdAt: new Date(task.createdAt),
               updatedAt: new Date(task.updatedAt || task.createdAt),
@@ -429,6 +437,17 @@ export default function TaskListPage() {
               <Calendar className="w-3 h-3" />
               <span>
                 Reminder: {new Date(task.reminderDate).toLocaleDateString()}
+              </span>
+            </div>
+          )}
+          {formatRecurrence(task.recurrenceFrequency, task.recurrenceInterval) && (
+            <div className="flex items-center gap-1">
+              <RefreshCw className="w-3 h-3" />
+              <span>
+                {formatRecurrence(
+                  task.recurrenceFrequency,
+                  task.recurrenceInterval
+                )}
               </span>
             </div>
           )}

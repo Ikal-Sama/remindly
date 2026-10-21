@@ -43,8 +43,17 @@ export const createTaskAction = async (
     }
 
     const fieldData = createTaskFormSchema.parse(values);
-    const { title, description, dueDate, reminderDate, categoryId, labelIds } =
-      fieldData;
+    const {
+      title,
+      description,
+      dueDate,
+      reminderDate,
+      categoryId,
+      labelIds,
+      recurrenceFrequency,
+      recurrenceInterval,
+      recurrenceEndDate,
+    } = fieldData;
 
     // Additional validation: ensure reminder date logic is enforced
     if (reminderDate && dueDate) {
@@ -81,6 +90,14 @@ export const createTaskAction = async (
         // Only allow categories for PRO plan users
         categoryId:
           subscription.plan.name === "PRO" && categoryId ? categoryId : null,
+        // A one-off task has no frequency; the interval stays at its default.
+        recurrenceFrequency: recurrenceFrequency ?? null,
+        recurrenceInterval: recurrenceFrequency
+          ? (recurrenceInterval ?? 1)
+          : 1,
+        recurrenceEndDate: recurrenceFrequency
+          ? (recurrenceEndDate ?? null)
+          : null,
         userId,
       },
     });
@@ -213,6 +230,9 @@ export const updateTask = async (
     reminderDate?: Date;
     categoryId?: string;
     labelIds?: string[];
+    recurrenceFrequency?: string | null;
+    recurrenceInterval?: number;
+    recurrenceEndDate?: Date;
   }
 ) => {
   try {
@@ -258,6 +278,13 @@ export const updateTask = async (
         dueDate: data.dueDate,
         reminderDate: isPro ? data.reminderDate : null,
         categoryId: isPro ? data.categoryId : null,
+        recurrenceFrequency: data.recurrenceFrequency ?? null,
+        recurrenceInterval: data.recurrenceFrequency
+          ? (data.recurrenceInterval ?? 1)
+          : 1,
+        recurrenceEndDate: data.recurrenceFrequency
+          ? (data.recurrenceEndDate ?? null)
+          : null,
         updatedAt: new Date(),
       },
     });

@@ -1,5 +1,6 @@
 // lib/validation/task.ts
 import { z } from "zod";
+import { MAX_RECURRENCE_INTERVAL } from "@/lib/recurrence";
 
 export const createTaskFormSchema = z
   .object({
@@ -9,6 +10,18 @@ export const createTaskFormSchema = z
     reminderDate: z.date().optional(),
     categoryId: z.string().optional(),
     labelIds: z.array(z.string()).optional(),
+    // Recurrence. `null` / undefined means a one-off task.
+    recurrenceFrequency: z
+      .enum(["DAILY", "WEEKLY", "MONTHLY"])
+      .nullable()
+      .optional(),
+    recurrenceInterval: z
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_RECURRENCE_INTERVAL)
+      .optional(),
+    recurrenceEndDate: z.date().optional(),
   })
   .refine(
     (data) => {
@@ -44,6 +57,31 @@ export const createTaskFormSchema = z
       message:
         "Reminder date must be before due date, not equivalent, and within 30 days of due date",
       path: ["reminderDate"],
+    }
+  )
+  .refine(
+    (data) => {
+      // A recurrence interval only makes sense when a frequency is set, and
+      // must stay within the supported range.
+      if (!data.recurrenceFrequency) return true;
+      const interval = data.recurrenceInterval ?? 1;
+      return interval >= 1 && interval <= MAX_RECURRENCE_INTERVAL;
+    },
+    {
+      message: `Interval must be between 1 and ${MAX_RECURRENCE_INTERVAL}`,
+      path: ["recurrenceInterval"],
+    }
+  )
+  .refine(
+    (data) => {
+      // An end date is only meaningful for a recurring task, and must fall
+      // after the first occurrence.
+      if (!data.recurrenceFrequency || !data.recurrenceEndDate) return true;
+      return data.recurrenceEndDate > data.dueDate;
+    },
+    {
+      message: "End date must be after the due date",
+      path: ["recurrenceEndDate"],
     }
   );
 

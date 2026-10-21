@@ -5,6 +5,7 @@ interface TaskReminderEmailProps {
   dueDate?: Date;
   reminderDate?: Date;
   isPro: boolean;
+  recurrenceLabel?: string | null;
 }
 
 export const taskReminderEmail = ({
@@ -14,6 +15,7 @@ export const taskReminderEmail = ({
   dueDate,
   reminderDate,
   isPro,
+  recurrenceLabel,
 }: TaskReminderEmailProps) => {
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
@@ -136,6 +138,15 @@ export const taskReminderEmail = ({
               ? `
             <div class="date-label">⏰ Reminder Date:</div>
             <div class="date-value">${formatDate(reminderDate)}</div>
+          `
+              : ""
+          }
+
+          ${
+            recurrenceLabel
+              ? `
+            <div class="date-label">🔁 Repeats:</div>
+            <div class="date-value">${recurrenceLabel}</div>
           `
               : ""
           }
