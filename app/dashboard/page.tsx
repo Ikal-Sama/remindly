@@ -42,7 +42,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = authClient.useSession();
   const { analytics, fetchAnalytics, setIsPro: setAnalyticsIsPro } = useAnalyticsStore();
-  const { isPro } = useSubscription();
+  const { isPro, isLoading: subscriptionLoading } = useSubscription();
   const user = (session?.user ?? null) as SessionUser | null;
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [refreshing, setRefreshing] = useState(false);
@@ -58,13 +58,23 @@ export default function DashboardPage() {
     setAnalyticsIsPro(isPro);
   }, [isPro, setAnalyticsIsPro]);
 
+  /**
+   * Fetch the analytics once the subscription tier is known.
+   *
+   * The tier selects the endpoint (`/api/analytics` for PRO,
+   * `/api/tasks/summary` for FREE). The previous version fired this effect on
+   * mount only, while the tier was still resolving - so a PRO user got the
+   * free-tier payload and, because the effect did not depend on the tier, it
+   * never retried. The detailed data only appeared after pressing Refresh.
+   */
   useEffect(() => {
-    fetchAnalytics();
-  }, [fetchAnalytics]);
+    if (subscriptionLoading) return;
+    fetchAnalytics(isPro);
+  }, [subscriptionLoading, isPro, fetchAnalytics]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchAnalytics();
+    await fetchAnalytics(isPro);
     setRefreshing(false);
   };
 
