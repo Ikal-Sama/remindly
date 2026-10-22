@@ -13,6 +13,8 @@ import {
   Legend,
 } from "chart.js";
 import { memo, useMemo } from "react";
+import type { TimeRange } from "@/lib/types";
+import { TIME_RANGE_LABELS, formatTrendLabel } from "@/lib/utils";
 
 // Register ChartJS components
 ChartJS.register(
@@ -36,21 +38,23 @@ interface AnalyticsChartsProps {
     completed: number;
   }>;
   type?: ChartType;
+  /** Time range the completion trend was computed for. */
+  range?: TimeRange;
 }
 
 export const AnalyticsCharts = memo(function AnalyticsCharts({
   completionTrend = [],
   categories = [],
   type = "both",
+  range = "30d",
 }: AnalyticsChartsProps) {
   // Prepare completion trend data from analytics
   const completionTrendData = useMemo(
     () => ({
       labels:
-        completionTrend?.map((item) => {
-          const date = new Date(item.date);
-          return date.toLocaleDateString("en-US", { weekday: "short" });
-        }) || [],
+        completionTrend?.map((item) =>
+          formatTrendLabel(new Date(item.date), range)
+        ) || [],
       datasets: [
         {
           label: "Tasks Completed",
@@ -61,7 +65,7 @@ export const AnalyticsCharts = memo(function AnalyticsCharts({
         },
       ],
     }),
-    [completionTrend]
+    [completionTrend, range]
   );
 
   const taskDistributionData = useMemo(
@@ -145,7 +149,7 @@ export const AnalyticsCharts = memo(function AnalyticsCharts({
     <div className="grid gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Completion Trend (Last 7 Days)</CardTitle>
+          <CardTitle>Completion Trend ({TIME_RANGE_LABELS[range]})</CardTitle>
         </CardHeader>
         <CardContent className="h-[300px]">
           <Bar data={completionTrendData} options={chartOptions} />

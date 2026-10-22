@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import type { Analytics } from "@/lib/types";
+import type { Analytics, TimeRange } from "@/lib/types";
 
 export type { Analytics };
 
@@ -10,8 +10,8 @@ interface AnalyticsStore {
   error: string | null;
   isPro: boolean;
   setIsPro: (isPro: boolean) => void;
-  fetchAnalytics: (isProOverride?: boolean) => Promise<void>;
-  refreshAnalytics: (isProOverride?: boolean) => Promise<void>;
+  fetchAnalytics: (isProOverride?: boolean, range?: TimeRange) => Promise<void>;
+  refreshAnalytics: (isProOverride?: boolean, range?: TimeRange) => Promise<void>;
   updateAnalytics: (analytics: Analytics) => void;
   incrementTaskCount: (isCompleted: boolean) => void;
   decrementTaskCount: (isCompleted: boolean) => void;
@@ -30,7 +30,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       setIsPro: (isPro) => set({ isPro }),
 
-      fetchAnalytics: async (isProOverride) => {
+      fetchAnalytics: async (isProOverride, range) => {
         /**
          * Prefer an explicitly supplied tier over the one held in the store.
          *
@@ -40,10 +40,13 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
          * then hit the free-tier endpoint for a PRO user.
          */
         const isPro = isProOverride ?? get().isPro;
+        const timeRange = range ?? "30d";
         set({ isLoading: true, error: null });
 
         try {
-          const endpoint = isPro ? "/api/analytics" : "/api/tasks/summary";
+          const endpoint = isPro
+            ? `/api/analytics?range=${timeRange}`
+            : "/api/tasks/summary";
           const response = await fetch(endpoint);
 
           if (response.ok) {
@@ -52,7 +55,12 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
               analytics: isPro
                 ? data.analytics
                 : {
-                    summary: data,
+                    summary: {
+                      ...data,
+                      tasksCreatedInRange: 0,
+                      tasksCompletedInRange: 0,
+                      tasksCreatedPreviousPeriod: 0,
+                    },
                     categories: [],
                     labels: [],
                     completionTrend: [],
@@ -67,7 +75,12 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
                 const basicData = await basicResponse.json();
                 set({
                   analytics: {
-                    summary: basicData,
+                    summary: {
+                      ...basicData,
+                      tasksCreatedInRange: 0,
+                      tasksCompletedInRange: 0,
+                      tasksCreatedPreviousPeriod: 0,
+                    },
                     categories: [],
                     labels: [],
                     completionTrend: [],
@@ -92,8 +105,8 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         }
       },
 
-      refreshAnalytics: async (isProOverride) => {
-        await get().fetchAnalytics(isProOverride);
+      refreshAnalytics: async (isProOverride, range) => {
+        await get().fetchAnalytics(isProOverride, range);
       },
 
       updateAnalytics: (analytics) => set({ analytics }),
@@ -114,8 +127,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
               ? analytics.summary.incompleteTasks
               : analytics.summary.incompleteTasks + 1,
             completionRate: 0, // Will be recalculated below
-            tasksCreatedLast30Days:
-              analytics.summary.tasksCreatedLast30Days + 1,
+            tasksCreatedInRange: analytics.summary.tasksCreatedInRange + 1,
           },
         };
 
@@ -148,9 +160,9 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
               ? analytics.summary.incompleteTasks
               : Math.max(0, analytics.summary.incompleteTasks - 1),
             completionRate: 0, // Will be recalculated below
-            tasksCreatedLast30Days: Math.max(
+            tasksCreatedInRange: Math.max(
               0,
-              analytics.summary.tasksCreatedLast30Days - 1
+              analytics.summary.tasksCreatedInRange - 1
             ),
           },
         };
@@ -183,9 +195,9 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
               ? Math.max(0, analytics.summary.incompleteTasks - 1)
               : analytics.summary.incompleteTasks + 1,
             completionRate: 0, // Will be recalculated below
-            tasksCompletedLast30Days: toCompleted
-              ? analytics.summary.tasksCompletedLast30Days + 1
-              : Math.max(0, analytics.summary.tasksCompletedLast30Days - 1),
+            tasksCompletedInRange: toCompleted
+              ? analytics.summary.tasksCompletedInRange + 1
+              : Math.max(0, analytics.summary.tasksCompletedInRange - 1),
           },
         };
 

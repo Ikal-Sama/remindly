@@ -126,14 +126,29 @@ export interface TaskSummary {
   overdueTasks: number;
 }
 
+/**
+ * Time windows the dashboard analytics can be scoped to.
+ *
+ * Shared by the API route (which resolves a range to a window) and the
+ * dashboard (which selects it).
+ */
+export type TimeRange = "7d" | "30d" | "90d" | "1y";
+
 /** PRO-tier analytics returned by `GET /api/analytics`. */
 export interface Analytics {
   summary: TaskSummary & {
-    tasksCreatedLast30Days: number;
-    tasksCompletedLast30Days: number;
+    /** Tasks created inside the selected range. */
+    tasksCreatedInRange: number;
+    /** Tasks completed inside the selected range. */
+    tasksCompletedInRange: number;
+    /** Tasks created in the window right before the selected range. */
+    tasksCreatedPreviousPeriod: number;
+    /** Weekday with the most completions in the selected range. */
     mostProductiveDay?: string;
-    averageTasksPerDay?: string;
-    currentStreak?: string;
+    /** Average number of tasks created per day in the selected range. */
+    averageTasksPerDay?: number;
+    /** Consecutive days (ending today) with at least one completion. */
+    currentStreak?: number;
   };
   categories: Array<{
     name: string;

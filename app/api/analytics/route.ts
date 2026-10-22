@@ -1,10 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import type { Analytics } from "@/lib/types";
+import { computeRangeAnalytics } from "@/lib/analytics";
+import { parseTimeRange } from "@/lib/utils";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -31,6 +33,8 @@ export async function GET() {
     if (!isPro) {
       return NextResponse.json({ error: "PRO feature" }, { status: 403 });
     }
+
+    const range = parseTimeRange(request.nextUrl.searchParams.get("range"));
 
     // Get all tasks with related data
     const tasks = await prisma.task.findMany({
@@ -144,49 +148,11 @@ export async function GET() {
       return new Date(task.dueDate) < now;
     }).length;
 
-    // Tasks created in last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(now.getDate() - 30);
-
-    const tasksCreatedLast30Days = plainTasks.filter(
-      (task) => new Date(task.createdAt) >= thirtyDaysAgo
-    ).length;
-
-    // Tasks completed in last 30 days
-    const tasksCompletedLast30Days = plainTasks.filter(
-      (task) => task.isCompleted && new Date(task.updatedAt) >= thirtyDaysAgo
-    ).length;
-
-    // Get completion data for the last 7 days
-    const completionTrend = [];
-    const today = new Date();
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const completedTasksForDay = await prisma.task.count({
-        where: {
-          userId,
-          isCompleted: true,
-          updatedAt: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-      });
-
-      completionTrend.push({
-        date: date.toISOString().split("T")[0],
-        completed: completedTasksForDay,
-      });
-    }
+    // Metrics that depend on the selected time range
+    const { summary: rangeSummary, completionTrend } = computeRangeAnalytics(
+      plainTasks,
+      range
+    );
 
     return NextResponse.json({
       analytics: {
@@ -197,8 +163,7 @@ export async function GET() {
           completionRate,
           tasksDueThisWeek,
           overdueTasks,
-          tasksCreatedLast30Days,
-          tasksCompletedLast30Days,
+          ...rangeSummary,
         },
         categories: categoryData,
         labels: labelData,
