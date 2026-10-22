@@ -27,3 +27,10 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+// Add Java 17 compatibility for all projects
+allprojects {
+    tasks.withType(JavaCompile).each {
+        options.compilerArgs << '-source' << '17' << '-target' << '17'
+    }
+}
