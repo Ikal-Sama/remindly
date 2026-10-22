@@ -274,6 +274,12 @@ Notes that matter:
   migration, or vice versa.
 - Run migrations and commit both `schema.prisma` and `prisma/migrations/`.
 - `npm run db:seed` seeds `SubscriptionPlan` (idempotent).
+- Migrations must run over the **direct** database URL, never the pooler.
+  `prisma/direct-url.ts` derives it from `DATABASE_URL` (or reads
+  `DIRECT_DATABASE_URL`). Prisma Migrate needs a Postgres *session* advisory
+  lock, which a transaction-mode pooler cannot hold - it fails with `P1002`.
+- `npm run db:migrate` retries when that lock is busy. Concurrent preview and
+  production builds race for it, and the loser used to fail the whole deploy.
 
 ---
 
@@ -290,7 +296,8 @@ Notes that matter:
 - `prisma.config.ts` loads `.env.local` explicitly.
 - Required to run locally: `DATABASE_URL`, `BETTER_AUTH_SECRET`,
   `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`. Optional per-feature: `ARCJET_KEY`,
-  Google OAuth, SMTP, Stripe, Cloudinary, `CRON_SECRET`.
+  Google OAuth, SMTP, Stripe, Cloudinary, `CRON_SECRET`,
+  `DIRECT_DATABASE_URL` (migrations only - derived from `DATABASE_URL`).
 
 ### Commands
 ```bash
