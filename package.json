@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:seed": "tsx prisma/seed.ts",
     "db:backfill-free": "tsx prisma/backfill-free-subscriptions.ts",
-    "db:migrate": "prisma migrate deploy"
+    "db:migrate": "tsx prisma/migrate-deploy.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
