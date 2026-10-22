@@ -164,6 +164,7 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Enter task description"
           rows={3}
+          className="h-28"
         />
       </div>
 
