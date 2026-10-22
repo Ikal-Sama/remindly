@@ -17,6 +17,16 @@ import { useCallback, useEffect, useState } from "react";
 export function useSubscription() {
   const [isPro, setIsPro] = useState<boolean>(false);
 
+  /**
+   * True until the first subscription request settles.
+   *
+   * The tier decides which analytics endpoint is valid (`/api/analytics` for
+   * PRO, `/api/tasks/summary` for FREE). Consumers must not fetch analytics
+   * before this resolves, otherwise a PRO user silently receives the
+   * free-tier payload and never sees the detailed data.
+   */
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const refetch = useCallback(async () => {
     try {
       const response = await fetch("/api/subscription/create", {
@@ -37,6 +47,11 @@ export function useSubscription() {
     } catch (error) {
       console.error("Error fetching subscription:", error);
       return false;
+    } finally {
+      // The tier has settled either way - resolved or failed - so consumers
+      // can stop waiting for it. A failed lookup leaves `isPro` as false,
+      // which is the correct fallback for a user without a PRO subscription.
+      setIsLoading(false);
     }
   }, []);
 
@@ -49,5 +64,5 @@ export function useSubscription() {
     void refetch();
   }, [refetch]);
 
-  return { isPro, refetch };
+  return { isPro, isLoading, refetch };
 }

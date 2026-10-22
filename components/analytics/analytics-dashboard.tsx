@@ -31,7 +31,9 @@ export default function AnalyticsDashboard({
 
   useEffect(() => {
     if (isPro) {
-      fetchAnalytics();
+      // Pass the tier explicitly: the store's own `isPro` may not have been
+      // synced yet, which would silently request the free-tier endpoint.
+      fetchAnalytics(isPro);
     }
   }, [isPro, fetchAnalytics]);
 

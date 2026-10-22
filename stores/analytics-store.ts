@@ -10,8 +10,8 @@ interface AnalyticsStore {
   error: string | null;
   isPro: boolean;
   setIsPro: (isPro: boolean) => void;
-  fetchAnalytics: () => Promise<void>;
-  refreshAnalytics: () => Promise<void>;
+  fetchAnalytics: (isProOverride?: boolean) => Promise<void>;
+  refreshAnalytics: (isProOverride?: boolean) => Promise<void>;
   updateAnalytics: (analytics: Analytics) => void;
   incrementTaskCount: (isCompleted: boolean) => void;
   decrementTaskCount: (isCompleted: boolean) => void;
@@ -30,8 +30,16 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       setIsPro: (isPro) => set({ isPro }),
 
-      fetchAnalytics: async () => {
-        const { isPro } = get();
+      fetchAnalytics: async (isProOverride) => {
+        /**
+         * Prefer an explicitly supplied tier over the one held in the store.
+         *
+         * The store's `isPro` is synced from the subscription hook by an
+         * effect, so it can still be stale (`false`) at the moment a caller
+         * that already knows the tier asks for data. Reading it here would
+         * then hit the free-tier endpoint for a PRO user.
+         */
+        const isPro = isProOverride ?? get().isPro;
         set({ isLoading: true, error: null });
 
         try {
@@ -84,8 +92,8 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
         }
       },
 
-      refreshAnalytics: async () => {
-        await get().fetchAnalytics();
+      refreshAnalytics: async (isProOverride) => {
+        await get().fetchAnalytics(isProOverride);
       },
 
       updateAnalytics: (analytics) => set({ analytics }),
