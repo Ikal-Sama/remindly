@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,13 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
 import CategorySelector from "@/components/ui/category-selector";
 import LabelSelector from "@/components/ui/label-selector";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { cn, toUtcMidnight } from "@/lib/utils";
+import { toUtcMidnight } from "@/lib/utils";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useAnalyticsUpdates } from "@/hooks/use-analytics-updates";
 import { toast } from "sonner";
@@ -151,7 +147,7 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter task title"
+          placeholder="Enter title"
           required
         />
       </div>
@@ -162,138 +158,99 @@ export default function EditTask({ task, onSuccess, onCancel }: EditTaskProps) {
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter task description"
-          rows={3}
+          placeholder="Write description here..."
           className="h-28"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Due Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !dueDate && "text-muted-foreground"
-                )}>
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dueDate ? format(dueDate, "PPP") : "Pick a date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={dueDate}
-                onSelect={setDueDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        {isPro && (
-          <>
-            <div className="space-y-2">
-              <Label>Reminder Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !reminderDate && "text-muted-foreground"
-                    )}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {reminderDate ? format(reminderDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={reminderDate}
-                    onSelect={setReminderDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <CategorySelector
-                selectedCategory={categoryId}
-                onCategoryChange={setCategoryId}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <LabelSelector
-                selectedLabels={labelIds}
-                onLabelsChange={setLabelIds}
-                disabled={isLoading}
-              />
-            </div>
-          </>
-        )}
-
-        <div className="space-y-2">
-          <Label>Repeat</Label>
-          <Select
-            value={recurrenceFrequency ?? ""}
-            onValueChange={(value) =>
-              setRecurrenceFrequency(
-                value === ""
-                  ? null
-                  : (value as "DAILY" | "WEEKLY" | "MONTHLY")
-              )
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Does not repeat" />
-            </SelectTrigger>
-            <SelectContent>
-              {RECURRENCE_OPTIONS.filter((option) => option.value !== "").map(
-                (option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                )
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {recurrenceFrequency && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Every</Label>
-              <Input
-                type="number"
-                min={1}
-                max={52}
-                value={recurrenceInterval}
-                onChange={(e) =>
-                  setRecurrenceInterval(
-                    e.target.value === "" ? 1 : Number(e.target.value)
-                  )
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>End on (optional)</Label>
-              <DatePickerField
-                value={recurrenceEndDate}
-                onChange={setRecurrenceEndDate}
-              />
-            </div>
-          </div>
-        )}
+      <div className="space-y-2">
+        <Label>Due date</Label>
+        <DatePickerField value={dueDate} onChange={setDueDate} />
       </div>
 
-      <div className="flex justify-end gap-2 pt-4">
+      <div className="space-y-2">
+        <Label>Repeat</Label>
+        <Select
+          value={recurrenceFrequency ?? ""}
+          onValueChange={(value) =>
+            setRecurrenceFrequency(
+              value === ""
+                ? null
+                : (value as "DAILY" | "WEEKLY" | "MONTHLY")
+            )
+          }
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Does not repeat" />
+          </SelectTrigger>
+          <SelectContent>
+            {RECURRENCE_OPTIONS.filter((option) => option.value !== "").map(
+              (option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              )
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {recurrenceFrequency && (
+        <>
+          <div className="space-y-2">
+            <Label>Every</Label>
+            <Input
+              type="number"
+              min={1}
+              max={52}
+              value={recurrenceInterval}
+              onChange={(e) =>
+                setRecurrenceInterval(
+                  e.target.value === "" ? 1 : Number(e.target.value)
+                )
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>End on (optional)</Label>
+            <DatePickerField
+              value={recurrenceEndDate}
+              onChange={setRecurrenceEndDate}
+            />
+          </div>
+        </>
+      )}
+
+      {isPro && (
+        <>
+          <div className="space-y-2">
+            <Label>Reminder date</Label>
+            <DatePickerField
+              value={reminderDate}
+              onChange={setReminderDate}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <CategorySelector
+              selectedCategory={categoryId}
+              onCategoryChange={setCategoryId}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <LabelSelector
+              selectedLabels={labelIds}
+              onLabelsChange={setLabelIds}
+              disabled={isLoading}
+            />
+          </div>
+        </>
+      )}
+
+      <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
