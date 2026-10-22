@@ -90,10 +90,10 @@ export default function HomePage() {
         <SubscriptionsPlan />
       </section>
       {/* APK Download Section */}
-      <section className="py-12 px-4 bg-gray-50">
+      <section className="py-12 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-6">Bring Remindly to Your Phone</h2>
-          <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Bring Remindly to Your Phone</h2>
+          <p className="text-gray-600 mb-8 max-w-2xl mx-auto dark:text-gray-300">
             Install the app on your Android device for a native experience with push notifications and offline support.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -104,24 +104,10 @@ export default function HomePage() {
             >
               Download APK (4.2 MB)
             </Button>
-            <a
-              href="https://play.google.com/store/apps/search?q=Remindly"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary">
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M19 14c1.49-1.46 1.49-3.85 0-5.32l-7.54 7.46 7.54-7.45L19 14zM17 3H7a5 5 0 0 0-5 5v14c0 2.21 3.58 4.41 8 5v-2c-3.07-1.32-3.88-2.64-3.98-3.07L7 22H2v-2h15v2c0 1.1.9 2 2 2h4c0-1.5-1.05-2.72-2.5-3.23L17 3zm-4 10.16l-1.63-1.61L12 14.1l1.62 1.61 1.72-1.71L17 11.89l-2.92 2.3L12 14.1l2.91-2.31L12 14.1z" />
-              </svg>
-              Get it on Google Play
-            </a>
-            <p className="text-sm text-gray-500 mt-4">
-              <strong>File size:</strong> 4.2 MB
-            </p>
           </div>
+          <p className="text-sm text-gray-500 mt-4 dark:text-gray-400">
+            <strong>File size:</strong> 4.2 MB
+          </p>
         </div>
       </section>
     </div>
