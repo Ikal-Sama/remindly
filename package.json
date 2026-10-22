@@ -23,6 +23,7 @@
     "@capacitor/core": "^8.5.3",
     "@capacitor/ios": "^8.5.3",
     "@capacitor/splash-screen": "^8.0.2",
+    "@capgo/capacitor-social-login": "^8.7.5",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",
