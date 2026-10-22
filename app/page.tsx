@@ -101,8 +101,11 @@ export default function HomePage() {
               size="lg"
               variant="default"
               className="px-8"
+              asChild
             >
-              Download APK (4.2 MB)
+              <a href="/remindly-apk-release.apk" download>
+                Download APK (4.2 MB)
+              </a>
             </Button>
           </div>
           <p className="text-sm text-gray-500 mt-4 dark:text-gray-400">
