@@ -218,7 +218,7 @@ export default function AnalyticsDashboard({
               <div>
                 <p className="text-sm text-gray-500">Created (30d)</p>
                 <p className="text-2xl font-bold">
-                  {analytics.summary.tasksCreatedLast30Days}
+                  {analytics.summary.tasksCreatedInRange}
                 </p>
               </div>
             </div>
@@ -321,7 +321,7 @@ export default function AnalyticsDashboard({
               <div>
                 <p className="font-medium">Recent Activity</p>
                 <p className="text-sm text-gray-500">
-                  {analytics.summary.tasksCompletedLast30Days} tasks completed
+                  {analytics.summary.tasksCompletedInRange} tasks completed
                   in the last 30 days
                 </p>
               </div>
@@ -331,7 +331,7 @@ export default function AnalyticsDashboard({
               <div>
                 <p className="font-medium">Task Creation</p>
                 <p className="text-sm text-gray-500">
-                  {analytics.summary.tasksCreatedLast30Days} new tasks created
+                  {analytics.summary.tasksCreatedInRange} new tasks created
                   in the last 30 days
                 </p>
               </div>

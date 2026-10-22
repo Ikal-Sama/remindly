@@ -31,17 +31,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAnalyticsStore } from "@/stores/analytics-store";
-import { cn } from "@/lib/utils";
+import { cn, TIME_RANGE_LABELS } from "@/lib/utils";
 import { AnalyticsCharts } from "@/components/analytics/analytics-charts";
 import { VerifyEmail } from "@/components/verify-email";
-import type { SessionUser } from "@/lib/types";
-
-type TimeRange = "7d" | "30d" | "90d" | "1y";
+import type { SessionUser, TimeRange } from "@/lib/types";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = authClient.useSession();
-  const { analytics, fetchAnalytics, setIsPro: setAnalyticsIsPro } = useAnalyticsStore();
+  const {
+    analytics,
+    isLoading: analyticsLoading,
+    fetchAnalytics,
+    setIsPro: setAnalyticsIsPro,
+  } = useAnalyticsStore();
   const { isPro, isLoading: subscriptionLoading } = useSubscription();
   const user = (session?.user ?? null) as SessionUser | null;
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
@@ -66,15 +69,18 @@ export default function DashboardPage() {
    * mount only, while the tier was still resolving - so a PRO user got the
    * free-tier payload and, because the effect did not depend on the tier, it
    * never retried. The detailed data only appeared after pressing Refresh.
+   *
+   * The selected time range is part of the request too, so switching it
+   * re-fetches the analytics for the new window.
    */
   useEffect(() => {
     if (subscriptionLoading) return;
-    fetchAnalytics(isPro);
-  }, [subscriptionLoading, isPro, fetchAnalytics]);
+    fetchAnalytics(isPro, timeRange);
+  }, [subscriptionLoading, isPro, timeRange, fetchAnalytics]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchAnalytics(isPro);
+    await fetchAnalytics(isPro, timeRange);
     setRefreshing(false);
   };
 
@@ -321,6 +327,19 @@ export default function DashboardPage() {
         )
       : 0;
 
+  // Period-over-period change of the tasks created inside the selected range
+  const tasksCreatedInRange = analytics?.summary?.tasksCreatedInRange ?? 0;
+  const tasksCreatedPreviousPeriod =
+    analytics?.summary?.tasksCreatedPreviousPeriod ?? 0;
+  const createdChangePercent =
+    tasksCreatedPreviousPeriod > 0
+      ? Math.round(
+          ((tasksCreatedInRange - tasksCreatedPreviousPeriod) /
+            tasksCreatedPreviousPeriod) *
+            100
+        )
+      : null;
+
   return (
     <div className="p-6 md:p-10">
       <div className="max-w-7xl mx-auto">
@@ -337,6 +356,7 @@ export default function DashboardPage() {
             <Select
               value={timeRange}
               onValueChange={(value) => setTimeRange(value as TimeRange)}
+              disabled={analyticsLoading}
             >
               <SelectTrigger className="w-32">
                 <SelectValue />
@@ -382,10 +402,35 @@ export default function DashboardPage() {
                     {analytics?.summary?.totalTasks || 0}
                   </h3>
                   <div className="flex items-center gap-1 mt-2">
-                    <TrendingUp className="w-3 h-3 text-green-500" />
-                    <span className="text-xs text-green-500">
-                      +12% from last month
-                    </span>
+                    {createdChangePercent === null ? (
+                      <>
+                        <TrendingUp className="w-3 h-3 text-green-500" />
+                        <span className="text-xs text-green-500">
+                          {tasksCreatedInRange} new task
+                          {tasksCreatedInRange === 1 ? "" : "s"} in the{" "}
+                          {TIME_RANGE_LABELS[timeRange].toLowerCase()}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {createdChangePercent >= 0 ? (
+                          <TrendingUp className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <TrendingDown className="w-3 h-3 text-red-500" />
+                        )}
+                        <span
+                          className={cn(
+                            "text-xs",
+                            createdChangePercent >= 0
+                              ? "text-green-500"
+                              : "text-red-500"
+                          )}
+                        >
+                          {createdChangePercent >= 0 ? "+" : ""}
+                          {createdChangePercent}% new tasks vs previous period
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/50">
@@ -492,6 +537,9 @@ export default function DashboardPage() {
                 <TrendingUp className="w-4 h-4 mr-2 text-blue-500" />
                 Completion Trend
               </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                {TIME_RANGE_LABELS[timeRange]}
+              </p>
             </CardHeader>
             <CardContent>
               <div className="h-64">
@@ -499,6 +547,7 @@ export default function DashboardPage() {
                   completionTrend={analytics?.completionTrend}
                   categories={analytics?.categories || []}
                   type="completion"
+                  range={timeRange}
                 />
               </div>
             </CardContent>
@@ -518,6 +567,7 @@ export default function DashboardPage() {
                   completionTrend={analytics?.completionTrend}
                   categories={analytics?.categories || []}
                   type="distribution"
+                  range={timeRange}
                 />
               </div>
             </CardContent>
@@ -617,12 +667,15 @@ export default function DashboardPage() {
               <Activity className="w-5 h-5 mr-2 text-green-500" />
               Productivity Insights
             </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Showing {TIME_RANGE_LABELS[timeRange].toLowerCase()}
+            </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
                 <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {analytics?.summary?.mostProductiveDay || "Monday"}
+                  {analytics?.summary?.mostProductiveDay ?? "—"}
                 </div>
                 <div className="text-sm text-green-600 dark:text-green-400 mt-1">
                   Most productive day
@@ -630,7 +683,7 @@ export default function DashboardPage() {
               </div>
               <div className="text-center p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
                 <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {analytics?.summary?.averageTasksPerDay || "3-5"}
+                  {analytics?.summary?.averageTasksPerDay ?? "—"}
                 </div>
                 <div className="text-sm text-blue-600 dark:text-blue-400 mt-1">
                   Avg. tasks per day
@@ -638,7 +691,10 @@ export default function DashboardPage() {
               </div>
               <div className="text-center p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20">
                 <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {analytics?.summary?.currentStreak || "7"}
+                  {analytics?.summary?.currentStreak ?? 0}
+                  {analytics?.summary?.currentStreak === 1
+                    ? " day"
+                    : " days"}
                 </div>
                 <div className="text-sm text-purple-600 dark:text-purple-400 mt-1">
                   Day streak
