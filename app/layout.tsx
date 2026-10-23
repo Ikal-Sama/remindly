@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import Navbar from "@/components/shared/navbar";
+import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { Footer } from "@/components/shared/footer";
 import StructuredData from "@/components/structured-data";
@@ -98,6 +99,7 @@ export default function RootLayout({
             <main className="min-h-screen  mx-auto py-10">{children}</main>
             <Toaster richColors />
             <Footer />
+            <MobileBottomNav />
           </div>
         </ThemeProvider>
         <Analytics />

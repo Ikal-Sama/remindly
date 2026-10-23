@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import { ModeToggle } from "../mode-toggle";
 import { authClient } from "@/lib/auth/auth-client";
+import { isAppRoute } from "@/lib/utils";
 import ActionButtonSimple from "../action-button-simple";
 import Profile from "../user/profile";
 import { Spinner } from "../ui/spinner";
@@ -15,6 +17,9 @@ import { useMounted } from "@/hooks/use-mounted";
 
 export default function Navbar() {
   const { data: session, isPending: loading } = authClient.useSession();
+  const pathname = usePathname();
+  // The app routes use the bottom tab bar on phones instead of a hamburger.
+  const inApp = isAppRoute(pathname);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, systemTheme } = useTheme();
@@ -138,40 +143,45 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Actions */}
           <div className="md:hidden flex items-center gap-2">
             <ModeToggle />
             {session?.user && session.user.emailVerified ? (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="mobile-menu relative"
-              >
-                {session.user.image ? (
-                  <Image
-                    src={session.user.image}
-                    alt="Profile"
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <Image
-                    src="/profile-picture.png"
-                    alt="Profile"
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                )}
-                {mobileMenuOpen && (
-                  <X
-                    size={16}
-                    className="absolute -top-1 -right-1 bg-background rounded-full p-1"
-                  />
-                )}
-              </Button>
+              inApp ? (
+                <Profile />
+              ) : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="mobile-menu relative"
+                  aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                >
+                  {session.user.image ? (
+                    <Image
+                      src={session.user.image}
+                      alt="Profile"
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src="/profile-picture.png"
+                      alt="Profile"
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  )}
+                  {mobileMenuOpen && (
+                    <X
+                      size={16}
+                      className="absolute -top-1 -right-1 bg-background rounded-full p-1"
+                    />
+                  )}
+                </Button>
+              )
             ) : (
               <Button size="sm">
                 <Link href="/login">Sign In</Link>
@@ -181,7 +191,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu */}
-        {mobileMenuOpen && (
+        {mobileMenuOpen && !inApp && (
           <div className="md:hidden absolute top-16 left-0 right-0 bg-background/95 backdrop-blur-md border-b shadow-lg z-40 mobile-menu">
             <div className="flex flex-col p-4 space-y-2">
               <Link

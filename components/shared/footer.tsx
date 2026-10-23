@@ -4,19 +4,28 @@ import { Mail, Facebook, Instagram, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useMounted } from "@/hooks/use-mounted";
+import { cn, isAppRoute } from "@/lib/utils";
 
 export function Footer() {
   const { theme, systemTheme } = useTheme();
   const mounted = useMounted();
+  const pathname = usePathname();
 
   const currentTheme = theme === "system" ? systemTheme : theme;
   const logoSrc =
     mounted && currentTheme === "dark" ? "/logo-light.png" : "/logo-dark.png";
 
   return (
-    <footer className="bg-muted/30 border-t z-50">
+    <footer
+      className={cn(
+        "bg-muted/30 border-t z-50",
+        // Clear the fixed mobile tab bar so the last row stays visible.
+        isAppRoute(pathname) && "pb-20 md:pb-0",
+      )}
+    >
       <div className="container mx-auto px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Section */}

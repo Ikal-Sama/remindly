@@ -23,6 +23,29 @@ export const TIME_RANGE_LABELS: Record<TimeRange, string> = {
 }
 
 /**
+ * Routes that make up the signed-in app.
+ *
+ * These are the destinations of the mobile bottom tab bar. On phones the top
+ * navigation also drops its hamburger menu here, because the tab bar replaces
+ * it.
+ */
+export const APP_NAV_ITEMS = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/task", label: "Tasks" },
+  { href: "/settings", label: "Profile" },
+] as const
+
+export type AppNavHref = (typeof APP_NAV_ITEMS)[number]["href"]
+
+/** True for an app route, including anything nested under it. */
+export function isAppRoute(pathname: string | null): boolean {
+  if (!pathname) return false
+  return APP_NAV_ITEMS.some(
+    ({ href }) => pathname === href || pathname.startsWith(`${href}/`),
+  )
+}
+
+/**
  * Resolve an untrusted value to a supported time range.
  *
  * Anything unknown falls back to the default range instead of failing the
