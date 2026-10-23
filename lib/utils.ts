@@ -32,6 +32,7 @@ export const TIME_RANGE_LABELS: Record<TimeRange, string> = {
 export const APP_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/task", label: "Tasks" },
+  { href: "/subscription", label: "Subscription" },
   { href: "/settings", label: "Profile" },
 ] as const
 

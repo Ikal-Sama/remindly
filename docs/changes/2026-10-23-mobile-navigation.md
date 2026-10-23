@@ -56,9 +56,24 @@ No APK rebuild is needed: the installed app loads the bundle from Vercel.
 - On-device Google sign-in + tab bar: requires a device, verified by the app
   owner after deployment.
 
+## Follow-up (2026-10-23) — Subscription, logout and a single profile entry point
+
+Requested changes after trying the first version:
+
+| Item | Change |
+| --- | --- |
+| Subscription in the bar | `APP_NAV_ITEMS` now includes `/subscription`, so it is an app route and gets the tab bar. |
+| Logout in the bar | Fifth slot, an action rather than a route: `authClient.signOut()` then `window.location.replace("/login")`. Tinted `text-muted-foreground` → `hover:text-destructive` to separate it from the destinations. |
+| Duplicate profile | Removed the avatar from the top bar on app routes. The bottom bar is now the only profile entry point there; the top bar keeps the theme toggle only. |
+| Logo destination | On phones the logo opens `/dashboard` for a signed-in user (and `/` when signed out). On `md` and wider it still opens `/`. Implemented with two responsive links, no viewport JS. |
+| Fit five tabs | Label size lowered from 11px to 10px (`text-[10px]`). |
+
+`/subscription` also stops showing the marketing hamburger on mobile, because it
+is now an app route and the bottom bar covers navigation.
+
 ## Notes / not done
 
-- The bar is intentionally limited to `/dashboard`, `/task` and `/settings`;
-  `/subscription` and `/choose-plan` keep the top navigation.
+- `/choose-plan` keeps the top navigation; it is part of the sign-up flow, not
+  an everyday destination.
 - The marketing pages are unchanged on mobile.
 - Android hardware back button behaviour was not touched.

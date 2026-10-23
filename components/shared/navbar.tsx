@@ -20,6 +20,7 @@ export default function Navbar() {
   const pathname = usePathname();
   // The app routes use the bottom tab bar on phones instead of a hamburger.
   const inApp = isAppRoute(pathname);
+  const signedIn = Boolean(session?.user?.emailVerified);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, systemTheme } = useTheme();
@@ -76,7 +77,22 @@ export default function Navbar() {
       <div className="max-w-screen mx-auto px-4 sm:px-6 lg:px-10">
         <div className="flex items-center justify-between relative z-50 h-16">
           <div className="flex items-center gap-5">
-            <Link href="/">
+            {/* On phones the app logo opens the dashboard, not the marketing
+                homepage. The website keeps the homepage link on wider screens. */}
+            <Link
+              href={signedIn ? "/dashboard" : "/"}
+              className="md:hidden"
+              aria-label={signedIn ? "Go to dashboard" : "Go to homepage"}
+            >
+              <Image
+                src={logoSrc}
+                alt="Remindly"
+                width={120}
+                height={32}
+                className="h-8 w-auto"
+              />
+            </Link>
+            <Link href="/" className="hidden md:block" aria-label="Go to homepage">
               <Image
                 src={logoSrc}
                 alt="Remindly"
@@ -146,43 +162,42 @@ export default function Navbar() {
           {/* Mobile Actions */}
           <div className="md:hidden flex items-center gap-2">
             <ModeToggle />
-            {session?.user && session.user.emailVerified ? (
-              inApp ? (
-                <Profile />
-              ) : (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="mobile-menu relative"
-                  aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-                >
-                  {session.user.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt="Profile"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <Image
-                      src="/profile-picture.png"
-                      alt="Profile"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  )}
-                  {mobileMenuOpen && (
-                    <X
-                      size={16}
-                      className="absolute -top-1 -right-1 bg-background rounded-full p-1"
-                    />
-                  )}
-                </Button>
-              )
-            ) : (
+            {/* The bottom tab bar owns navigation on app routes, so the top bar
+                keeps only the theme toggle there - no second avatar. */}
+            {!inApp && signedIn && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="mobile-menu relative"
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              >
+                {session?.user?.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt="Profile"
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <Image
+                    src="/profile-picture.png"
+                    alt="Profile"
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                )}
+                {mobileMenuOpen && (
+                  <X
+                    size={16}
+                    className="absolute -top-1 -right-1 bg-background rounded-full p-1"
+                  />
+                )}
+              </Button>
+            )}
+            {!signedIn && (
               <Button size="sm">
                 <Link href="/login">Sign In</Link>
               </Button>
@@ -249,7 +264,7 @@ export default function Navbar() {
                 Logout
               </Button>
               <div className="border-t pt-2 mt-2">
-                {session?.user && session.user.emailVerified ? (
+                {signedIn ? (
                   <>
                     <ActionButtonSimple variant="secondary" className="w-full">
                       <Link
