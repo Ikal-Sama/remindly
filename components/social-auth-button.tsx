@@ -35,13 +35,17 @@ export function SocialAuthButton({
         const nativeIdToken = await requestNativeGoogleIdToken();
 
         if (nativeIdToken) {
-          await authClient.$fetch("/sign-in/social", {
+          const { error } = await authClient.$fetch("/sign-in/social", {
             method: "POST",
             body: {
               provider,
               idToken: { token: nativeIdToken },
             },
           });
+
+          if (error) {
+            throw new Error(error.message || "Server rejected Google sign in token");
+          }
 
           router.push(callbackURL);
           router.refresh();
@@ -57,7 +61,8 @@ export function SocialAuthButton({
       // A dismissed account picker is not an error worth reporting.
       if (isNativeSignInCancelled(error)) return;
 
-      toast.error(`Failed to sign in with ${provider}`);
+      const msg = error instanceof Error && error.message ? error.message : `Failed to sign in with ${provider}`;
+      toast.error(msg);
       console.error(`${provider} sign in error:`, error);
     }
   };
