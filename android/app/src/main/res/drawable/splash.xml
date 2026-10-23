@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Launch window background for the Capacitor SplashScreen plugin (API < 31)
+  and for the pre-draw frame on every version. A solid brand background with
+  the splash icon centred at its intrinsic 240dp size keeps the mark the same
+  size on every screen and avoids stretching it to the display aspect ratio.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/ic_launcher_background" />
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@mipmap/splash_icon" />
+    </item>
+</layer-list>
