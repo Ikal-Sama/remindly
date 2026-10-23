@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { authClient } from "@/lib/auth/auth-client";
+import { clearOfflineCache } from "@/lib/offline-cache";
 import {
   APP_NAV_ITEMS,
   cn,
@@ -39,6 +40,9 @@ export function MobileBottomNav() {
   if (!isAppRoute(pathname) || !session?.user?.emailVerified) return null;
 
   const signOut = () => {
+    // Never leave another account's cached tasks on the device.
+    clearOfflineCache();
+
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {

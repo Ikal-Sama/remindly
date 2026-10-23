@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth/auth-client";
+import { clearOfflineCache } from "@/lib/offline-cache";
 import Image from "next/image";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
@@ -68,15 +69,18 @@ export default function Profile() {
 
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() =>
+          onClick={() => {
+            // The offline cache belongs to the signed-in user, so it must not
+            // survive the session.
+            clearOfflineCache();
             authClient.signOut({
               fetchOptions: {
                 onSuccess: () => {
                   window.location.href = "/login";
                 },
               },
-            })
-          }
+            });
+          }}
           className="rounded-md px-2 py-2 cursor-pointer transition-all hover:bg-accent"
         >
           Logout <LogOut className="w-4 h-4" />

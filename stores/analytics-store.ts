@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { Analytics, TimeRange } from "@/lib/types";
+import { apiFetch, isOfflineError } from "@/lib/api-client";
+import { readCache, writeCache } from "@/lib/offline-cache";
 
 export type { Analytics };
 
@@ -8,6 +10,11 @@ interface AnalyticsStore {
   analytics: Analytics | null;
   isLoading: boolean;
   error: string | null;
+  /**
+   * Set when the payload came from the offline cache instead of the network.
+   * Holds the ISO timestamp of the cached read.
+   */
+  staleAt: string | null;
   isPro: boolean;
   setIsPro: (isPro: boolean) => void;
   fetchAnalytics: (isProOverride?: boolean, range?: TimeRange) => Promise<void>;
@@ -26,6 +33,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       analytics: null,
       isLoading: false,
       error: null,
+      staleAt: null,
       isPro: false,
 
       setIsPro: (isPro) => set({ isPro }),
@@ -41,52 +49,69 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
          */
         const isPro = isProOverride ?? get().isPro;
         const timeRange = range ?? "30d";
+        const cacheKey = `analytics:${timeRange}`;
         set({ isLoading: true, error: null });
+
+        /**
+         * Fall back to the last successful payload for this range. Returns
+         * `false` when the device has never managed to load it.
+         */
+        const restoreCached = () => {
+          const cached = readCache<Analytics>(cacheKey);
+          if (!cached) return false;
+
+          set({
+            analytics: cached.data,
+            staleAt: cached.savedAt,
+            isLoading: false,
+          });
+          return true;
+        };
 
         try {
           const endpoint = isPro
             ? `/api/analytics?range=${timeRange}`
             : "/api/tasks/summary";
-          const response = await fetch(endpoint);
+          const response = await apiFetch(endpoint);
 
           if (response.ok) {
             const data = await response.json();
-            set({
-              analytics: isPro
-                ? data.analytics
-                : {
-                    summary: {
-                      ...data,
-                      tasksCreatedInRange: 0,
-                      tasksCompletedInRange: 0,
-                      tasksCreatedPreviousPeriod: 0,
-                    },
-                    categories: [],
-                    labels: [],
-                    completionTrend: [],
+            const analytics: Analytics = isPro
+              ? data.analytics
+              : {
+                  summary: {
+                    ...data,
+                    tasksCreatedInRange: 0,
+                    tasksCompletedInRange: 0,
+                    tasksCreatedPreviousPeriod: 0,
                   },
-              isLoading: false,
-            });
+                  categories: [],
+                  labels: [],
+                  completionTrend: [],
+                };
+
+            writeCache(cacheKey, analytics);
+            set({ analytics, isLoading: false, staleAt: null });
           } else if (response.status === 403) {
             // For free users, try to get basic task data
             if (!isPro) {
-              const basicResponse = await fetch("/api/tasks/summary");
+              const basicResponse = await apiFetch("/api/tasks/summary");
               if (basicResponse.ok) {
                 const basicData = await basicResponse.json();
-                set({
-                  analytics: {
-                    summary: {
-                      ...basicData,
-                      tasksCreatedInRange: 0,
-                      tasksCompletedInRange: 0,
-                      tasksCreatedPreviousPeriod: 0,
-                    },
-                    categories: [],
-                    labels: [],
-                    completionTrend: [],
+                const analytics: Analytics = {
+                  summary: {
+                    ...basicData,
+                    tasksCreatedInRange: 0,
+                    tasksCompletedInRange: 0,
+                    tasksCreatedPreviousPeriod: 0,
                   },
-                  isLoading: false,
-                });
+                  categories: [],
+                  labels: [],
+                  completionTrend: [],
+                };
+
+                writeCache(cacheKey, analytics);
+                set({ analytics, isLoading: false, staleAt: null });
                 return;
               }
             }
@@ -95,13 +120,27 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
                 ? "Analytics is a PRO feature"
                 : "Failed to load task data",
               isLoading: false,
+              staleAt: null,
             });
-          } else {
-            set({ error: "Failed to load data", isLoading: false });
+          } else if (!restoreCached()) {
+            set({
+              error: "Failed to load data",
+              isLoading: false,
+              staleAt: null,
+            });
           }
         } catch (error) {
           console.error("Error fetching data:", error);
-          set({ error: "Failed to load data", isLoading: false });
+
+          if (restoreCached()) return;
+
+          set({
+            error: isOfflineError(error)
+              ? "You're offline. Reconnect to see your analytics."
+              : "Failed to load data",
+            isLoading: false,
+            staleAt: null,
+          });
         }
       },
 
@@ -217,7 +256,13 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
       clearError: () => set({ error: null }),
 
       reset: () =>
-        set({ analytics: null, isLoading: false, error: null, isPro: false }),
+        set({
+          analytics: null,
+          isLoading: false,
+          error: null,
+          staleAt: null,
+          isPro: false,
+        }),
     }),
     {
       name: "analytics-store",

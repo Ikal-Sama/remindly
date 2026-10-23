@@ -23,6 +23,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import { StaleDataNote } from "@/components/shared/stale-data-note";
+import { useNetworkStatus } from "@/hooks/use-network-status";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -42,10 +45,13 @@ export default function DashboardPage() {
   const {
     analytics,
     isLoading: analyticsLoading,
+    error,
+    staleAt,
     fetchAnalytics,
     setIsPro: setAnalyticsIsPro,
   } = useAnalyticsStore();
   const { isPro, isLoading: subscriptionLoading } = useSubscription();
+  const isOnline = useNetworkStatus();
   const user = (session?.user ?? null) as SessionUser | null;
   const [timeRange, setTimeRange] = useState<TimeRange>("30d");
   const [refreshing, setRefreshing] = useState(false);
@@ -79,10 +85,33 @@ export default function DashboardPage() {
   }, [subscriptionLoading, isPro, timeRange, fetchAnalytics]);
 
   const handleRefresh = async () => {
+    if (!isOnline) {
+      toast.error("You're offline. Reconnect to refresh your analytics.");
+      return;
+    }
+
     setRefreshing(true);
     await fetchAnalytics(isPro, timeRange);
     setRefreshing(false);
   };
+
+  const dataNotice = staleAt ? (
+    <StaleDataNote savedAt={staleAt} label="analytics" onRetry={handleRefresh} />
+  ) : error ? (
+    <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-400">
+      <AlertCircle className="size-4 shrink-0" aria-hidden />
+      <span className="flex-1">{error}</span>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1.5 px-2 text-xs"
+        onClick={handleRefresh}
+      >
+        <RefreshCw className="size-3" aria-hidden />
+        Retry
+      </Button>
+    </div>
+  ) : null;
 
   if (sessionLoading) {
     return (
@@ -113,6 +142,8 @@ export default function DashboardPage() {
               Upgrade to PRO for detailed analytics
             </Button>
           </div>
+
+          {dataNotice}
 
           {/* Basic Metrics for FREE users */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -387,6 +418,8 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
+
+        {dataNotice}
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

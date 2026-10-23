@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/auth-client";
+import { clearOfflineCache } from "@/lib/offline-cache";
 import { deleteAccount } from "@/app/action/user";
 
 const CONFIRM_WORD = "DELETE";
@@ -56,6 +57,7 @@ export function DeleteAccountSection() {
       // The user row and its sessions are gone, so clear the now-dead cookie
       // before redirecting.
       await authClient.signOut().catch(() => {});
+      clearOfflineCache();
 
       toast.success("Your account has been deleted.");
       router.push("/");
