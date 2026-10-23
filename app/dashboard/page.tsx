@@ -99,7 +99,7 @@ export default function DashboardPage() {
 
   if (!isPro) {
     return (
-      <div className="p-6 md:p-10">
+      <div className="p-6 md:p-10 pb-24 md:pb-10">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -341,7 +341,7 @@ export default function DashboardPage() {
       : null;
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="p-6 md:p-10 pb-24 md:pb-10">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">

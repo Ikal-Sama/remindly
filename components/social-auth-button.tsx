@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { ActionButtonSimple } from "./action-button-simple";
 import { authClient } from "@/lib/auth/auth-client";
 import {
@@ -24,8 +23,6 @@ export function SocialAuthButton({
   disabled = false,
   className,
 }: SocialAuthButtonProps) {
-  const router = useRouter();
-
   const handleSocialSignIn = async () => {
     try {
       // Inside the Android app Google refuses the WebView redirect, so the
@@ -47,8 +44,11 @@ export function SocialAuthButton({
             throw new Error(error.message || "Server rejected Google sign in token");
           }
 
-          router.push(callbackURL);
-          router.refresh();
+          // The raw ID-token request bypasses Better Auth's client store, so
+          // the already-mounted navbar still holds the signed-out session. A
+          // full navigation re-reads the session cookie on boot, which is what
+          // updates the avatar and the app navigation.
+          window.location.replace(callbackURL);
           return;
         }
       }
@@ -61,7 +61,10 @@ export function SocialAuthButton({
       // A dismissed account picker is not an error worth reporting.
       if (isNativeSignInCancelled(error)) return;
 
-      const msg = error instanceof Error && error.message ? error.message : `Failed to sign in with ${provider}`;
+      const msg =
+        error instanceof Error && error.message
+          ? error.message
+          : `Failed to sign in with ${provider}`;
       toast.error(msg);
       console.error(`${provider} sign in error:`, error);
     }

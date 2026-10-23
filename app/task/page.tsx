@@ -488,7 +488,7 @@ export default function TaskListPage() {
   }
 
   return (
-    <div className="p-10">
+    <div className="p-10 pb-24 md:pb-10">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Tasks</h1>
         <ActionButton size="sm" onClick={createTask} loading={isLoading}>
