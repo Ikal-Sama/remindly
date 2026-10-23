@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CreditCard,
   LayoutDashboard,
   ListChecks,
+  LogOut,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -19,6 +21,7 @@ import {
 const ICONS: Record<AppNavHref, LucideIcon> = {
   "/dashboard": LayoutDashboard,
   "/task": ListChecks,
+  "/subscription": CreditCard,
   "/settings": UserRound,
 };
 
@@ -34,6 +37,16 @@ export function MobileBottomNav() {
   const { data: session } = authClient.useSession();
 
   if (!isAppRoute(pathname) || !session?.user?.emailVerified) return null;
+
+  const signOut = () => {
+    authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.replace("/login");
+        },
+      },
+    });
+  };
 
   return (
     <nav
@@ -51,7 +64,7 @@ export function MobileBottomNav() {
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex h-16 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
+                "relative flex h-16 flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors",
                 active
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground",
@@ -69,6 +82,15 @@ export function MobileBottomNav() {
             </Link>
           );
         })}
+
+        <button
+          type="button"
+          onClick={signOut}
+          className="relative flex h-16 flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-destructive"
+        >
+          <LogOut className="size-5" aria-hidden />
+          Logout
+        </button>
       </div>
     </nav>
   );
