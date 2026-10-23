@@ -72,9 +72,12 @@ export async function requestNativeGoogleIdToken(): Promise<string | null> {
     }
     await initialization;
 
+    // No `scopes` on purpose. The plugin always requests the default
+    // email/profile/openid scopes, and passing any custom scope makes the
+    // native side demand a patched MainActivity.
     const { result } = await SocialLogin.login({
       provider: "google",
-      options: { scopes: ["email", "profile"] },
+      options: {},
     });
 
     if (!("idToken" in result) || !result.idToken) {

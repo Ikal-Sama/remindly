@@ -93,7 +93,43 @@ itself, which would embed the old APK inside the new one.
 - End-to-end on a device still requires the Google Cloud Console step above,
   which cannot be done from this repository.
 
+## Follow-up (2026-10-23) — "You CANNOT use scopes without modifying the main activity"
+
+**Symptom.** Tapping **Continue with Google** on the device failed with
+`google sign in error: Error: You CANNOT use scopes without modifying the main
+activity. Please follow the docs!` and no account picker appeared.
+
+**Root cause.** `requestNativeGoogleIdToken()` passed
+`options: { scopes: ["email", "profile"] }` to `SocialLogin.login()`. The
+plugin's `GoogleProvider.java` rejects any `scopes` entry unless the host
+`MainActivity` implements `ModifiedMainActivityForSocialLoginPlugin`:
+
+```java
+if (scopesArray != null) {
+    if (!(this.activity instanceof ModifiedMainActivityForSocialLoginPlugin)) {
+        call.reject("You CANNOT use scopes without modifying the main activity. ...");
+```
+
+**Why dropping the option is safe.** The plugin always requests
+`userinfo.email`, `userinfo.profile` and `openid` when no scopes are given
+(`DEFAULT_SCOPES`), and the Credential Manager request
+(`GetSignInWithGoogleOption`) does not accept custom scopes at all. The
+explicit list therefore added nothing.
+
+**Changes.**
+
+| File | Change |
+| --- | --- |
+| `lib/auth/native-social-login.ts` | Login now passes `options: {}`, with a comment explaining why custom scopes must stay out. |
+| `components/social-auth-button.tsx` | The native branch inspects the `{ data, error }` result of `$fetch` and throws the server message, so the toast shows e.g. `Invalid token` instead of a generic failure. |
+
+This is a JavaScript-only change: the installed APK loads the bundle from
+Vercel, so no rebuild/reinstall was needed.
+
 ## Notes / not done
 
 - iOS is not covered: the plugin supports it, but no iOS build exists here.
 - The APK is still signed with v2 only (no v1/JAR), so it needs Android 7.0+.
+- Custom Google scopes would require patching `MainActivity` to implement
+  `ModifiedMainActivityForSocialLoginPlugin` and rebuilding the APK. Not needed
+  for sign-in.
