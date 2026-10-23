@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
 import { ModeToggle } from "../mode-toggle";
 import { authClient } from "@/lib/auth/auth-client";
+import { clearOfflineCache } from "@/lib/offline-cache";
 import { isAppRoute } from "@/lib/utils";
 import ActionButtonSimple from "../action-button-simple";
 import Profile from "../user/profile";
@@ -250,6 +251,7 @@ export default function Navbar() {
                 variant="ghost"
                 className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
                 onClick={() => {
+                  clearOfflineCache();
                   authClient.signOut({
                     fetchOptions: {
                       onSuccess: () => {

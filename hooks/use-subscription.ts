@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
+import { readCache, writeCache } from "@/lib/offline-cache";
+
+const CACHE_KEY = "subscription:isPro";
 
 /**
  * Subscription status hook.
@@ -29,7 +33,7 @@ export function useSubscription() {
 
   const refetch = useCallback(async () => {
     try {
-      const response = await fetch("/api/subscription/create", {
+      const response = await apiFetch("/api/subscription/create", {
         method: "GET",
       });
 
@@ -41,11 +45,19 @@ export function useSubscription() {
         await response.json();
       const currentPlan: string | undefined =
         data.currentSubscription?.plan?.name;
+      const nextIsPro = currentPlan === "PRO";
 
-      setIsPro(currentPlan === "PRO");
+      setIsPro(nextIsPro);
+      writeCache(CACHE_KEY, nextIsPro);
       return true;
     } catch (error) {
       console.error("Error fetching subscription:", error);
+
+      // Offline: keep the last known tier so a PRO user still gets the PRO
+      // layout instead of silently dropping to the free one.
+      const cached = readCache<boolean>(CACHE_KEY);
+      if (cached) setIsPro(cached.data);
+
       return false;
     } finally {
       // The tier has settled either way - resolved or failed - so consumers

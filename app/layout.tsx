@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Navbar from "@/components/shared/navbar";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
+import { OfflineBanner } from "@/components/shared/offline-banner";
+import { NetworkWatcher } from "@/components/network/network-watcher";
 import { Footer } from "@/components/shared/footer";
 import StructuredData from "@/components/structured-data";
 import { Analytics } from "@vercel/analytics/next";
@@ -100,6 +102,8 @@ export default function RootLayout({
             <Toaster richColors />
             <Footer />
             <MobileBottomNav />
+            <OfflineBanner />
+            <NetworkWatcher />
           </div>
         </ThemeProvider>
         <Analytics />

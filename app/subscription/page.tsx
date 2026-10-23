@@ -2,14 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 import { Button } from "@/components/ui/button";
+import { apiFetch, isOfflineError } from "@/lib/api-client";
+import { readCache, writeCache } from "@/lib/offline-cache";
 
 type PlanName = "FREE" | "PRO" | null;
+
+const PLAN_CACHE_KEY = "subscription:plan";
 
 export default function SubscriptionPage() {
   const router = useRouter();
   const { isPro, refetch } = useSubscription();
+  const isOnline = useNetworkStatus();
   const [planName, setPlanName] = useState<PlanName>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +25,7 @@ export default function SubscriptionPage() {
   useEffect(() => {
     const fetchSubscription = async () => {
       try {
-        const response = await fetch("/api/subscription/create", {
+        const response = await apiFetch("/api/subscription/create", {
           method: "GET",
         });
 
@@ -30,14 +37,26 @@ export default function SubscriptionPage() {
         const data: { currentSubscription?: { plan?: { name: string } } } = await response.json();
         const currentPlan: string | undefined =
           data.currentSubscription?.plan?.name;
+        const nextPlan: PlanName =
+          currentPlan === "FREE" || currentPlan === "PRO" ? currentPlan : null;
 
-        if (currentPlan === "FREE" || currentPlan === "PRO") {
-          setPlanName(currentPlan);
+        setPlanName(nextPlan);
+        writeCache(PLAN_CACHE_KEY, nextPlan);
+        setError(null);
+      } catch (err) {
+        // Offline: keep the last known plan on screen rather than showing
+        // "no active subscription" to a paying customer.
+        const cached = readCache<PlanName>(PLAN_CACHE_KEY);
+        if (cached !== null) {
+          setPlanName(cached.data);
+          setError("You're offline - showing your last known plan.");
         } else {
-          setPlanName(null);
+          setError(
+            isOfflineError(err)
+              ? "You're offline. Reconnect to load your subscription."
+              : "Something went wrong while fetching your subscription.",
+          );
         }
-      } catch {
-        setError("Something went wrong while fetching your subscription.");
       } finally {
         setIsLoading(false);
       }
@@ -52,11 +71,16 @@ export default function SubscriptionPage() {
   }, [refetch]);
 
   const handleUpgradeClick = async () => {
+    if (!isOnline) {
+      setError("You're offline. Reconnect to start a checkout.");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch("/api/subscription/checkout", {
+      const response = await apiFetch("/api/subscription/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -85,11 +109,16 @@ export default function SubscriptionPage() {
   };
 
   const handleCancelSubscription = async () => {
+    if (!isOnline) {
+      setError("You're offline. Reconnect to cancel your subscription.");
+      return;
+    }
+
     try {
       setIsCancelling(true);
       setError(null);
 
-      const response = await fetch("/api/subscription/cancel", {
+      const response = await apiFetch("/api/subscription/cancel", {
         method: "POST",
       });
 
@@ -159,6 +188,13 @@ export default function SubscriptionPage() {
                   Priority access to new features (Pro only)
                 </li>
               </ul>
+
+              {error && (
+                <p className="flex items-start gap-2 text-xs text-destructive">
+                  <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  <span>{error}</span>
+                </p>
+              )}
             </div>
 
             <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-4">

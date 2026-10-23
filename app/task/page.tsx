@@ -37,6 +37,7 @@ import {
   Tag,
   Hash,
   RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { formatRecurrence } from "@/lib/recurrence";
 import {
@@ -47,6 +48,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
+import { StaleDataNote } from "@/components/shared/stale-data-note";
+import { useNetworkStatus } from "@/hooks/use-network-status";
+import { apiFetch, getErrorMessage, isOfflineError } from "@/lib/api-client";
+import { readCache, writeCache } from "@/lib/offline-cache";
+import { markOffline } from "@/stores/network-store";
 import { cn } from "@/lib/utils";
 import { VerifyEmail } from "@/components/verify-email";
 
@@ -92,21 +98,59 @@ interface Label {
   color: string;
 }
 
+interface User {
+  id: string;
+  email?: string;
+  emailVerified?: boolean;
+  image?: string | null;
+}
+
+/**
+ * Tasks stored in localStorage have gone through JSON, so their dates are ISO
+ * strings. The normalised shape is what the component renders.
+ */
+type SerializedTask = Omit<
+  Task,
+  "dueDate" | "reminderDate" | "recurrenceEndDate" | "createdAt" | "updatedAt"
+> & {
+  dueDate?: string | Date | null;
+  reminderDate?: string | Date | null;
+  recurrenceEndDate?: string | Date | null;
+  createdAt: string | Date;
+  updatedAt?: string | Date | null;
+};
+
+const CACHED_USER_KEY = "user";
+const tasksCacheKey = (userId: string) => `tasks:${userId}`;
+const categoriesCacheKey = (userId: string) => `categories:${userId}`;
+const labelsCacheKey = (userId: string) => `labels:${userId}`;
+
+function normalizeTasks(tasks: SerializedTask[] | undefined | null): Task[] {
+  return (tasks ?? []).map((task) => ({
+    ...task,
+    dueDate: task.dueDate ? new Date(task.dueDate) : null,
+    reminderDate: task.reminderDate ? new Date(task.reminderDate) : null,
+    recurrenceEndDate: task.recurrenceEndDate
+      ? new Date(task.recurrenceEndDate)
+      : null,
+    createdAt: new Date(task.createdAt),
+    updatedAt: new Date(task.updatedAt || task.createdAt),
+  }));
+}
+
 export default function TaskListPage() {
   const router = useRouter();
+  const isOnline = useNetworkStatus();
   const [isLoading, setIsLoading] = useState(false);
-  interface User {
-    id: string;
-    email?: string;
-    emailVerified?: boolean;
-    image?: string | null;
-  }
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(false);
+  const [staleAt, setStaleAt] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -125,21 +169,40 @@ export default function TaskListPage() {
     const checkAuth = async () => {
       try {
         const session = await authClient.getSession();
+
         if (!session.data?.user) {
+          // A null session is authoritative when the server answered. Only
+          // trust the cache when the request could not reach the server.
+          const cached = readCache<User>(CACHED_USER_KEY);
+          if (!navigator.onLine && cached) {
+            setUser(cached.data);
+            return;
+          }
+
           router.push("/login");
           return;
         }
 
+        writeCache(CACHED_USER_KEY, session.data.user);
+
         // Check if email is verified
         if (!session.data.user.emailVerified) {
           setUser(session.data.user);
-          setLoading(false);
           return;
         }
 
         setUser(session.data.user);
       } catch (error) {
         console.error("Auth error:", error);
+
+        if (isOfflineError(error)) markOffline();
+
+        const cached = readCache<User>(CACHED_USER_KEY);
+        if (cached && (!navigator.onLine || isOfflineError(error))) {
+          setUser(cached.data);
+          return;
+        }
+
         router.push("/login");
       } finally {
         setLoading(false);
@@ -154,44 +217,64 @@ export default function TaskListPage() {
       if (!user) return;
 
       setTasksLoading(true);
+      setLoadError(null);
       try {
         // Fetch tasks
         const tasksResult = await getLoggedInUserAllTasks(user.id);
-        if (tasksResult.success) {
-          const tasksWithDates =
-            tasksResult.tasks?.map((task) => ({
-              ...task,
-              dueDate: task.dueDate ? new Date(task.dueDate) : null,
-              reminderDate: task.reminderDate
-                ? new Date(task.reminderDate)
-                : null,
-              recurrenceEndDate: task.recurrenceEndDate
-                ? new Date(task.recurrenceEndDate)
-                : null,
-              createdAt: new Date(task.createdAt),
-              updatedAt: new Date(task.updatedAt || task.createdAt),
-            })) || [];
-          setTasks(tasksWithDates);
+        if (!tasksResult.success) {
+          throw new Error(tasksResult.error || "Failed to fetch tasks");
+        }
+
+        const nextTasks = normalizeTasks(tasksResult.tasks);
+        setTasks(nextTasks);
+        setStaleAt(null);
+        writeCache(tasksCacheKey(user.id), nextTasks);
+
+        // Categories and labels only drive the filter controls, so a failure
+        // there must not hide the task list.
+        const [categoriesResult, labelsResult] = await Promise.allSettled([
+          apiFetch("/api/categories").then((response) =>
+            response.ok ? response.json() : null,
+          ),
+          apiFetch("/api/labels").then((response) =>
+            response.ok ? response.json() : null,
+          ),
+        ]);
+
+        if (categoriesResult.status === "fulfilled" && categoriesResult.value) {
+          const nextCategories: Category[] =
+            categoriesResult.value.categories || [];
+          setCategories(nextCategories);
+          writeCache(categoriesCacheKey(user.id), nextCategories);
         } else {
-          toast.error("Failed to fetch tasks");
+          const cached = readCache<Category[]>(categoriesCacheKey(user.id));
+          if (cached) setCategories(cached.data);
         }
 
-        // Fetch categories
-        const categoriesResponse = await fetch("/api/categories");
-        if (categoriesResponse.ok) {
-          const categoriesData = await categoriesResponse.json();
-          setCategories(categoriesData.categories || []);
-        }
-
-        // Fetch labels
-        const labelsResponse = await fetch("/api/labels");
-        if (labelsResponse.ok) {
-          const labelsData = await labelsResponse.json();
-          setLabels(labelsData.labels || []);
+        if (labelsResult.status === "fulfilled" && labelsResult.value) {
+          const nextLabels: Label[] = labelsResult.value.labels || [];
+          setLabels(nextLabels);
+          writeCache(labelsCacheKey(user.id), nextLabels);
+        } else {
+          const cached = readCache<Label[]>(labelsCacheKey(user.id));
+          if (cached) setLabels(cached.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        toast.error("Something went wrong");
+
+        if (isOfflineError(error)) markOffline();
+
+        const cached = readCache<Task[]>(tasksCacheKey(user.id));
+        if (cached) {
+          setTasks(normalizeTasks(cached.data));
+          setStaleAt(cached.savedAt);
+        } else if (isOfflineError(error) || !navigator.onLine) {
+          setLoadError(
+            "You're offline and there are no saved tasks on this device yet.",
+          );
+        } else {
+          setLoadError(getErrorMessage(error, "Couldn't load your tasks."));
+        }
       } finally {
         setTasksLoading(false);
       }
@@ -201,7 +284,7 @@ export default function TaskListPage() {
       if (!user) return;
 
       try {
-        const response = await fetch("/api/subscription/create", {
+        const response = await apiFetch("/api/subscription/create", {
           method: "GET",
         });
 
@@ -218,10 +301,23 @@ export default function TaskListPage() {
 
     fetchData();
     fetchSubscription();
-  }, [user, router]);
+  }, [user, reloadKey]);
+
+  /**
+   * Guard for write actions: the tab bar and the cached read view still work
+   * without a connection, but saving would only fail after the user typed
+   * everything in.
+   */
+  const ensureOnline = (action: string) => {
+    if (isOnline) return true;
+
+    toast.error(`You're offline. Reconnect to ${action}.`);
+    return false;
+  };
 
   const createTask = async () => {
     if (!user) return;
+    if (!ensureOnline("create a task")) return;
 
     setIsLoading(true);
     try {
@@ -281,6 +377,7 @@ export default function TaskListPage() {
 
   const handleCompleteTask = async (taskId: string) => {
     if (!user) return;
+    if (!ensureOnline("complete this task")) return;
 
     // Task is found and its completion status is checked implicitly
 
@@ -306,6 +403,7 @@ export default function TaskListPage() {
 
   const handleDeleteTask = async (taskId: string) => {
     if (!user) return;
+    if (!ensureOnline("delete this task")) return;
 
     setActionLoading(taskId);
     try {
@@ -496,6 +594,16 @@ export default function TaskListPage() {
           <span className="hidden sm:inline">Create Task</span>
         </ActionButton>
       </div>
+
+      {staleAt && (
+        <div className="mt-4">
+          <StaleDataNote
+            savedAt={staleAt}
+            label="tasks"
+            onRetry={() => setReloadKey((key) => key + 1)}
+          />
+        </div>
+      )}
 
       {/* Enhanced Filters Section */}
       <div className="mt-8 p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm transition-all duration-200">
@@ -799,20 +907,39 @@ export default function TaskListPage() {
           </div>
         </div>
       ) : tasks.length === 0 ? (
-        <div className="text-center py-12 mt-8">
-          <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Calendar className="w-8 h-8 text-gray-400" />
+        loadError ? (
+          <div className="text-center py-12 mt-8">
+            <div className="bg-red-100 dark:bg-red-900/40 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-lg font-medium text-primary mb-2">
+              Couldn&apos;t load your tasks
+            </h3>
+            <p className="text-gray-500 mb-4 max-w-sm mx-auto">{loadError}</p>
+            <Button
+              variant="outline"
+              onClick={() => setReloadKey((key) => key + 1)}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try again
+            </Button>
           </div>
-          <h3 className="text-lg font-medium text-primary mb-2">
-            No tasks yet
-          </h3>
-          <p className="text-gray-500 mb-4">
-            Create your first task to get started!
-          </p>
-          <ActionButton size="sm" onClick={createTask} loading={isLoading}>
-            <Plus size={16} /> Create Task
-          </ActionButton>
-        </div>
+        ) : (
+          <div className="text-center py-12 mt-8">
+            <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Calendar className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-primary mb-2">
+              No tasks yet
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Create your first task to get started!
+            </p>
+            <ActionButton size="sm" onClick={createTask} loading={isLoading}>
+              <Plus size={16} /> Create Task
+            </ActionButton>
+          </div>
+        )
       ) : (
         <div className="mt-8">
           <div className="flex justify-between items-center mb-6">
