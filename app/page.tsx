@@ -104,12 +104,12 @@ export default function HomePage() {
               asChild
             >
               <a href="/remindly-apk-release.apk" download>
-                Download APK (6.4 MB)
+                Download APK (5.6 MB)
               </a>
             </Button>
           </div>
           <p className="text-sm text-gray-500 mt-4 dark:text-gray-400">
-            <strong>File size:</strong> 6.4 MB
+            <strong>File size:</strong> 5.6 MB
           </p>
         </div>
       </section>
