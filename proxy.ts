@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { arcjetInstance } from "@/lib/arcjet/config";
+import { isWebsiteRoute } from "@/lib/utils";
 
 const PROTECTED_ROUTES = [
   "/dashboard",
@@ -9,6 +10,9 @@ const PROTECTED_ROUTES = [
   "/subscription",
 ]; // only for logged-in users
 const AUTH_ROUTES = ["/login", "/signup", "/register"]; // only for guests
+
+/** User-agent token appended by the native shell. Keep in sync with capacitor.config.ts. */
+const NATIVE_APP_UA = "RemindlyApp";
 
 function isRouteMatch(pathname: string, routes: string[]) {
   return routes.some(
@@ -26,6 +30,13 @@ function isAuthenticated(request: NextRequest) {
 
   // Check if cookie exists and has a value (not empty)
   return !!(sessionCookie?.value && sessionCookie.value.length > 0);
+}
+
+function isNativeShell(request: NextRequest) {
+  // The Android shell appends this token to the WebView user agent
+  // (see `appendUserAgent` in capacitor.config.ts). It lets us keep the
+  // marketing website out of the app without waiting for client-side JS.
+  return (request.headers.get("user-agent") || "").includes(NATIVE_APP_UA);
 }
 
 export default async function proxy(request: NextRequest) {
@@ -111,6 +122,23 @@ export default async function proxy(request: NextRequest) {
   const userIsAuthenticated = isAuthenticated(request);
   const protectedRoute = isRouteMatch(pathname, PROTECTED_ROUTES);
   const authRoute = isRouteMatch(pathname, AUTH_ROUTES);
+
+  // 0) Route the native shell like an app, not a website. The app never shows
+  // marketing pages: signed-in users land on the dashboard, guests on the
+  // onboarding screen. Browsers never see the onboarding route.
+  if (isNativeShell(request)) {
+    if (pathname === "/welcome") {
+      if (userIsAuthenticated) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+    } else if (isWebsiteRoute(pathname)) {
+      return NextResponse.redirect(
+        new URL(userIsAuthenticated ? "/dashboard" : "/welcome", request.url)
+      );
+    }
+  } else if (pathname === "/welcome") {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 
   // 1) Block unauthenticated users from protected routes
   if (protectedRoute && !userIsAuthenticated) {

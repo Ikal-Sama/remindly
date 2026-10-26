@@ -4,6 +4,10 @@ const config: CapacitorConfig = {
   appId: 'com.ikalsama.remindly',
   appName: 'Remindly',
   webDir: 'public',
+  // Appended to the WebView user agent so proxy.ts can tell the native shell
+  // apart from a browser and boot it into onboarding instead of the
+  // marketing homepage. Keep in sync with NATIVE_APP_UA in proxy.ts.
+  appendUserAgent: 'RemindlyApp',
   server: {
     cleartext: true,
     // Development: use localhost; Production: use deployed Vercel URL
