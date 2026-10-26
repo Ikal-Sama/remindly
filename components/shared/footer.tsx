@@ -7,7 +7,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useMounted } from "@/hooks/use-mounted";
-import { cn, isAppRoute } from "@/lib/utils";
+import { isWebsiteRoute } from "@/lib/utils";
 
 export function Footer() {
   const { theme, systemTheme } = useTheme();
@@ -18,14 +18,12 @@ export function Footer() {
   const logoSrc =
     mounted && currentTheme === "dark" ? "/logo-light.png" : "/logo-dark.png";
 
+  // The footer is website chrome. Auth screens and the signed-in app - which
+  // includes every screen of the native shell - are deliberately footer-free.
+  if (!isWebsiteRoute(pathname)) return null;
+
   return (
-    <footer
-      className={cn(
-        "bg-muted/30 border-t z-50",
-        // Clear the fixed mobile tab bar so the last row stays visible.
-        isAppRoute(pathname) && "pb-20 md:pb-0",
-      )}
-    >
+    <footer className="bg-muted/30 border-t z-50">
       <div className="container mx-auto px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Section */}

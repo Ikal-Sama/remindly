@@ -3,7 +3,7 @@ export default function robots() {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/admin/", "/dashboard"],
+      disallow: ["/api/", "/admin/", "/dashboard", "/welcome"],
     },
     sitemap: `${
       process.env.NEXT_PUBLIC_APP_URL || "https://remindly-pi.vercel.app"

@@ -59,6 +59,9 @@ export default function Navbar() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [mobileMenuOpen]);
 
+  // The app onboarding screen owns the full viewport - no website chrome.
+  if (pathname === "/welcome") return null;
+
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">

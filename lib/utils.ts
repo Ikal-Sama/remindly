@@ -47,6 +47,21 @@ export function isAppRoute(pathname: string | null): boolean {
 }
 
 /**
+ * Public marketing pages.
+ *
+ * These keep the website chrome (navbar links and footer). Auth screens and
+ * the signed-in app are app-like, and the native shell never shows these
+ * routes at all - the proxy boots it into onboarding or the dashboard.
+ */
+export const WEBSITE_ROUTES = ["/", "/about", "/pricing", "/contact"] as const
+
+/** True for a public marketing page, as opposed to an auth or app screen. */
+export function isWebsiteRoute(pathname: string | null): boolean {
+  if (!pathname) return false
+  return (WEBSITE_ROUTES as readonly string[]).includes(pathname)
+}
+
+/**
  * Resolve an untrusted value to a supported time range.
  *
  * Anything unknown falls back to the default range instead of failing the
