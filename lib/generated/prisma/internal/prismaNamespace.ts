@@ -392,6 +392,7 @@ export const ModelName = {
   UserSubscription: 'UserSubscription',
   Task: 'Task',
   EmailNotification: 'EmailNotification',
+  SmsNotification: 'SmsNotification',
   Category: 'Category',
   Label: 'Label',
   TaskLabel: 'TaskLabel'
@@ -410,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "account" | "verification" | "subscriptionPlan" | "userSubscription" | "task" | "emailNotification" | "category" | "label" | "taskLabel"
+    modelProps: "user" | "session" | "account" | "verification" | "subscriptionPlan" | "userSubscription" | "task" | "emailNotification" | "smsNotification" | "category" | "label" | "taskLabel"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1006,6 +1007,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SmsNotification: {
+      payload: Prisma.$SmsNotificationPayload<ExtArgs>
+      fields: Prisma.SmsNotificationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SmsNotificationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SmsNotificationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload>
+        }
+        findFirst: {
+          args: Prisma.SmsNotificationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SmsNotificationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload>
+        }
+        findMany: {
+          args: Prisma.SmsNotificationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload>[]
+        }
+        create: {
+          args: Prisma.SmsNotificationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload>
+        }
+        createMany: {
+          args: Prisma.SmsNotificationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SmsNotificationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload>[]
+        }
+        delete: {
+          args: Prisma.SmsNotificationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload>
+        }
+        update: {
+          args: Prisma.SmsNotificationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload>
+        }
+        deleteMany: {
+          args: Prisma.SmsNotificationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SmsNotificationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SmsNotificationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload>[]
+        }
+        upsert: {
+          args: Prisma.SmsNotificationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SmsNotificationPayload>
+        }
+        aggregate: {
+          args: Prisma.SmsNotificationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSmsNotification>
+        }
+        groupBy: {
+          args: Prisma.SmsNotificationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SmsNotificationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SmsNotificationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SmsNotificationCountAggregateOutputType> | number
+        }
+      }
+    }
     Category: {
       payload: Prisma.$CategoryPayload<ExtArgs>
       fields: Prisma.CategoryFieldRefs
@@ -1275,7 +1350,10 @@ export const UserScalarFieldEnum = {
   image: 'image',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  stripeCustomerId: 'stripeCustomerId'
+  stripeCustomerId: 'stripeCustomerId',
+  phoneNumber: 'phoneNumber',
+  phoneCarrier: 'phoneCarrier',
+  smsReminders: 'smsReminders'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -1385,6 +1463,21 @@ export const EmailNotificationScalarFieldEnum = {
 } as const
 
 export type EmailNotificationScalarFieldEnum = (typeof EmailNotificationScalarFieldEnum)[keyof typeof EmailNotificationScalarFieldEnum]
+
+
+export const SmsNotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  taskId: 'taskId',
+  type: 'type',
+  status: 'status',
+  provider: 'provider',
+  error: 'error',
+  sentAt: 'sentAt',
+  scheduledFor: 'scheduledFor'
+} as const
+
+export type SmsNotificationScalarFieldEnum = (typeof SmsNotificationScalarFieldEnum)[keyof typeof SmsNotificationScalarFieldEnum]
 
 
 export const CategoryScalarFieldEnum = {
@@ -1647,6 +1740,7 @@ export type GlobalOmitConfig = {
   userSubscription?: Prisma.UserSubscriptionOmit
   task?: Prisma.TaskOmit
   emailNotification?: Prisma.EmailNotificationOmit
+  smsNotification?: Prisma.SmsNotificationOmit
   category?: Prisma.CategoryOmit
   label?: Prisma.LabelOmit
   taskLabel?: Prisma.TaskLabelOmit

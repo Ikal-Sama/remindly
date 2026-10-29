@@ -80,6 +80,11 @@ export type Task = Prisma.TaskModel
  */
 export type EmailNotification = Prisma.EmailNotificationModel
 /**
+ * Model SmsNotification
+ * 
+ */
+export type SmsNotification = Prisma.SmsNotificationModel
+/**
  * Model Category
  * 
  */

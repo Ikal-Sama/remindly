@@ -59,6 +59,7 @@ export const ModelName = {
   UserSubscription: 'UserSubscription',
   Task: 'Task',
   EmailNotification: 'EmailNotification',
+  SmsNotification: 'SmsNotification',
   Category: 'Category',
   Label: 'Label',
   TaskLabel: 'TaskLabel'
@@ -88,7 +89,10 @@ export const UserScalarFieldEnum = {
   image: 'image',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  stripeCustomerId: 'stripeCustomerId'
+  stripeCustomerId: 'stripeCustomerId',
+  phoneNumber: 'phoneNumber',
+  phoneCarrier: 'phoneCarrier',
+  smsReminders: 'smsReminders'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -198,6 +202,21 @@ export const EmailNotificationScalarFieldEnum = {
 } as const
 
 export type EmailNotificationScalarFieldEnum = (typeof EmailNotificationScalarFieldEnum)[keyof typeof EmailNotificationScalarFieldEnum]
+
+
+export const SmsNotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  taskId: 'taskId',
+  type: 'type',
+  status: 'status',
+  provider: 'provider',
+  error: 'error',
+  sentAt: 'sentAt',
+  scheduledFor: 'scheduledFor'
+} as const
+
+export type SmsNotificationScalarFieldEnum = (typeof SmsNotificationScalarFieldEnum)[keyof typeof SmsNotificationScalarFieldEnum]
 
 
 export const CategoryScalarFieldEnum = {
