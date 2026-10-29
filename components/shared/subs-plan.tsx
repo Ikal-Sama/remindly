@@ -110,6 +110,12 @@ export default function SubscriptionsPlan() {
               </div>
               <span>Auto email reminder for tasks</span>
             </li>
+            <li className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
+              </div>
+              <span>SMS reminder on your phone</span>
+            </li>
           </ul>
 
           <Button
@@ -153,6 +159,12 @@ export default function SubscriptionsPlan() {
                 <div className="w-2 h-2 rounded-full bg-primary"></div>
               </div>
               <span>Custom email reminder dates</span>
+            </li>
+            <li className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
+              </div>
+              <span>SMS reminder on your phone</span>
             </li>
           </ul>
 

@@ -45,6 +45,28 @@ export async function sendEmail({ to, subject, html, from }: EmailParams) {
   }
 }
 
+interface PlainEmailParams {
+  to: string;
+  subject: string;
+  text: string;
+}
+
+/**
+ * Plain-text email over the same SMTP transport.
+ *
+ * Used by the free email-to-SMS gateway, which ignores HTML and the subject.
+ * Kept separate from `sendEmail` so reminder mail keeps its HTML template and
+ * high-priority headers.
+ */
+export async function sendPlainEmail({ to, subject, text }: PlainEmailParams) {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER,
+    to,
+    subject,
+    text,
+  });
+}
+
 export function createEmailTemplate(
   user: EmailUser,
   content: {

@@ -28,6 +28,12 @@ model User {
   categories    Category[]
   labels        Label[]
   stripeCustomerId String?  // Stripe customer id (cus_...)
+  // SMS reminders. The number is stored in E.164 (`+14155550123`) and the
+  // carrier id points at an email-to-SMS gateway in `lib/sms/carriers.ts`.
+  phoneNumber   String?
+  phoneCarrier  String?
+  smsReminders  Boolean   @default(false)
+  smsNotifications SmsNotification[]
 
   @@unique([email])
   @@map("user")
@@ -141,6 +147,7 @@ model Task {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   notifications EmailNotification[]
+  smsNotifications SmsNotification[]
   taskLabels    TaskLabel[]
   
   @@index([userId])
@@ -166,6 +173,26 @@ model EmailNotification {
   @@index([scheduledFor])
   @@index([type, scheduledFor]) // For scheduled email processing
   @@map("email_notification")
+}
+
+model SmsNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  taskId    String?  // null for test messages
+  type      String   // "CUSTOM_REMINDER" | "DUE_DATE_REMINDER" | "TEST"
+  status    String   // "SENT" | "FAILED" | "LOGGED" (console transport)
+  provider  String   // "email-gateway" | "console"
+  error     String?
+  sentAt    DateTime @default(now())
+  scheduledFor DateTime
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, sentAt]) // test-message cooldown and daily cap
+  @@index([taskId])
+  @@index([scheduledFor])
+  @@map("sms_notification")
 }
 
 model Category {
