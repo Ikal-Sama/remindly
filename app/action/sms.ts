@@ -89,9 +89,14 @@ export async function updateSmsSettings(input: {
       };
     }
 
+    const provider = getSmsProvider();
+    // Carrier ids only mean something to the email-to-SMS gateways. TextBee
+    // and the console transport send from a SIM, so any E.164 number works.
+    const usesCarrierGateway = provider === "email-gateway";
+
     const carrierId = input.carrierId.trim() || null;
-    const carrier = getSmsCarrier(carrierId);
-    if (carrierId && !carrier) {
+    const carrier = usesCarrierGateway ? getSmsCarrier(carrierId) : null;
+    if (usesCarrierGateway && carrierId && !carrier) {
       return { success: false, error: "That mobile carrier is not supported." };
     }
 
@@ -105,7 +110,7 @@ export async function updateSmsSettings(input: {
     // Every gateway in the catalogue is North American. Rejecting other
     // numbers here is kinder than accepting them and silently dropping every
     // reminder.
-    if (phoneNumber && carrier && !phoneNumber.startsWith("+1")) {
+    if (usesCarrierGateway && phoneNumber && carrier && !phoneNumber.startsWith("+1")) {
       return {
         success: false,
         error:
@@ -113,11 +118,7 @@ export async function updateSmsSettings(input: {
       };
     }
 
-    if (
-      input.enabled &&
-      getSmsProvider() === "email-gateway" &&
-      !carrier
-    ) {
+    if (usesCarrierGateway && input.enabled && !carrier) {
       return {
         success: false,
         error: "Choose your mobile carrier so we can route the message.",

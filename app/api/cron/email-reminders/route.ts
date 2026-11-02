@@ -226,7 +226,7 @@ export async function GET() {
       if (
         task.user.smsReminders &&
         task.user.phoneNumber &&
-        (task.user.phoneCarrier || getSmsProvider() === "console")
+        (task.user.phoneCarrier || getSmsProvider() !== "email-gateway")
       ) {
         const used = smsUsage.get(task.userId) ?? 0;
 

@@ -45,6 +45,7 @@ export function SmsSettings() {
   const [enabled, setEnabled] = useState(false);
   const [saved, setSaved] = useState<SavedSettings | null>(null);
   const [provider, setProvider] = useState("email-gateway");
+  const [canDeliver, setCanDeliver] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -62,6 +63,7 @@ export function SmsSettings() {
         setCarrierId(settings.carrierId);
         setEnabled(settings.enabled);
         setProvider(settings.provider);
+        setCanDeliver(settings.canDeliver);
         setSaved({
           phoneNumber: settings.phoneNumber,
           carrierId: settings.carrierId,
@@ -162,46 +164,61 @@ export function SmsSettings() {
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
-                placeholder="+1 415 555 0123"
+                placeholder={
+                  provider === "email-gateway"
+                    ? "+1 415 555 0123"
+                    : "+63 917 123 4567"
+                }
                 value={phoneNumber}
                 onChange={(event) => setPhoneNumber(event.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Include the country code. Free delivery currently supports US
-                and Canadian numbers.
+                {provider === "email-gateway"
+                  ? "Include the country code. Free delivery currently supports US and Canadian numbers."
+                  : "Include the country code, e.g. +639171234567."}
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="sms-carrier">Mobile carrier</Label>
-              <Select
-                value={carrierId || undefined}
-                onValueChange={(value) => setCarrierId(value)}
-              >
-                <SelectTrigger id="sms-carrier" className="w-full">
-                  <SelectValue placeholder="Select your carrier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SMS_CARRIER_COUNTRIES.map((country) => (
-                    <SelectGroup key={country.code}>
-                      <SelectLabel>{country.label}</SelectLabel>
-                      {SMS_CARRIERS.filter(
-                        (carrier) => carrier.country === country.code,
-                      ).map((carrier) => (
-                        <SelectItem key={carrier.id} value={carrier.id}>
-                          {carrier.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
+            {provider === "email-gateway" && (
+              <div className="space-y-2">
+                <Label htmlFor="sms-carrier">Mobile carrier</Label>
+                <Select
+                  value={carrierId || undefined}
+                  onValueChange={(value) => setCarrierId(value)}
+                >
+                  <SelectTrigger id="sms-carrier" className="w-full">
+                    <SelectValue placeholder="Select your carrier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SMS_CARRIER_COUNTRIES.map((country) => (
+                      <SelectGroup key={country.code}>
+                        <SelectLabel>{country.label}</SelectLabel>
+                        {SMS_CARRIERS.filter(
+                          (carrier) => carrier.country === country.code,
+                        ).map((carrier) => (
+                          <SelectItem key={carrier.id} value={carrier.id}>
+                            {carrier.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  We use your carrier&apos;s email-to-SMS gateway, so there is no
+                  extra account or fee. Standard message rates from your carrier
+                  may still apply.
+                </p>
+              </div>
+            )}
+
+            {provider === "textbee" && (
               <p className="text-xs text-muted-foreground">
-                We use your carrier&apos;s email-to-SMS gateway, so there is no
-                extra account or fee. Standard message rates from your carrier
-                may still apply.
+                Messages are sent from the Remindly gateway SIM through TextBee,
+                so any mobile number works. Standard carrier rates from that SIM
+                apply.
               </p>
-            </div>
+            )}
 
             <label className="flex items-start gap-3 text-sm">
               <input
@@ -223,6 +240,13 @@ export function SmsSettings() {
               <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
                 Delivery is not configured on this deployment, so messages are
                 logged instead of sent.
+              </p>
+            )}
+
+            {provider === "textbee" && !canDeliver && (
+              <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                SMS delivery is not configured on this deployment yet, so test
+                messages and reminders will fail until the gateway is connected.
               </p>
             )}
 
